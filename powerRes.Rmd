@@ -1,0 +1,240 @@
+---
+title: "Summary of power results"
+output: pdf_document
+date: "2024-05-25"
+---
+
+```{r setup, include=FALSE, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE,message=FALSE,warning=FALSE)
+```
+
+## Load required packages
+
+```{r}
+library(tidyverse)
+```
+
+## Read results 
+
+
+```{r}
+res <- read.table("simres.txt",header=TRUE)
+# make sure simultion config parameters are all factors
+for(col in c("method","ConCaseRatio","nmatch","exptype","beta","ncov")) {
+  res[,col] <- factor(res[,col])
+}
+# Alphabetically the factor level "logF1010" of the method variable
+# comes before the other logF's. Move this level to the end.
+res$method <- fct_relevel(res$method,"logF1010",after=Inf)
+```
+
+* We only show power results for tests found to control
+type 1 error. 
+For binary exposures of any frequency (0.05, 0.1 or 0.2), Firth,
+and the log-$F(m,m)$ with $m=1$ or 2 controlled type 1 error 
+rates without being unduly conservative.
+For continuous exposures, Firth,
+and the log-$F(m,m)$ with $m=6$ or 8 controlled type 1 error 
+rates without being unduly conservative.  
+
+```{r}
+biased.test <- scan(file="simresbiasedtestRes.txt",what=logical())
+all.configs <- with(res,paste(method,ConCaseRatio,nmatch,exptype,ncov,sep=":"))
+biased.configs <- all.configs[biased.test]
+for(i in 1:length(biased.configs)){
+  res[all.configs==biased.configs[i],"test.rej"] <- NA
+}
+keep <- 
+  (res$exptype!="continuous" & (res$method %in% c("CLR","Firth","logF11","logF22"))) | 
+  (res$exptype=="continuous" & (res$method %in% c("CLR","Firth","logF66","logF88")))
+res <- res[keep,]
+```
+
+## Summary
+
+* Comprehensive plots that show all the power estimates are included in the Appendix.
+* Not surprisingly, power increases with the size of the exposure effect and the amount of data (number of controls per matched set and/or number of matched sets).
+    * In the results shown below we fix values of these simulation
+    configuration variables
+* For binary exposures, power increases as we increase the exposure prevalence. Power for the continuous exposure is greater than for the binary exposures (refer to intepretation of exposure effect for different exposure distributions).
+* Power decreases as we increase the number of covariates. [Tie back to
+events per variable.]
+* For the log-$F$ methods, power decreases as the amount of 
+shrinkage increases.
+
+* To compare the power of the different methods we choose a combination of 
+exposure effect, number of controls per matched
+set and number of matched sets. Do plots of estimated
+power for select exposure types. Plot the power for the different
+estimators as the number of covariates changes.
+
+```{r}
+plotres <- function(ConCaseRatio,beta,filename) {
+  pos.dodge <- 0.5
+  #plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta&res$method!="CLR",]
+  plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta,]
+  droplevels(plotdat)
+  levels(plotdat$exptype) <-c("bin 0.05","bin 0.10","bin 0.20", "cts") 
+  p <- ggplot(plotdat,aes(x=ncov,y=test.rej,color=method)) +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL)) +
+   geom_point(position=position_dodge(pos.dodge),size=.3) +
+   geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+   geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+   facet_grid(exptype~nmatch,scales="free") + xlab("number of covariates")+ ylab("estimated power") +
+   ggtitle("number of matched sets") +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+  print(p)
+  test.rejdat <- plotdat[plotdat$test.rej-2*plotdat$test.rej.se >00 | plotdat$test.rej+2*plotdat$test.rej.se <0,c(1:6,8:9)]
+  ggsave(file=filename,plot=p,device="eps")
+  invisible(test.rejdat)
+}
+
+plotres(1,0.5,"power_1to1_beta0.5.eps") #slight pos test.rej for 5 covs, nmatch=20
+plotres(1,1,"power_1to1_beta1.0.eps") #slight pos test.rej for 5 covs, nmatch=20
+plotres(1,1.5,"power_1to1_beta1.5.eps") #slight pos test.rej for 5 covs, nmatch=20
+
+plotres(4,0.5,"power_1to4_beta0.5.eps")
+plotres(4,1,"power_1to4_beta1.0.eps")
+plotres(4,1.5,"power_1to4_beta1.5.eps")
+```
+
+## Targetted plots of the estimated power
+
+* Continuous exposure. Similar conclusions 
+for different numbers of mathched sets and exposure effects.
+Showing results here for 30 matched sets and exposure effect 1.
+Separate plots for 1:1 and 1:4 matching.
+* 1:1 matching:
+The estimated power of the Firth, log-$F(6,6)$ and 
+log-$F(8,8)$ tests are within simulation error of each
+other except for the case of 5 nuisance covariates.
+With five nuisance covariates the power of the Firth test is
+lower than the two log-$F$ tests.
+* 1:4 matching: Power of all three methods is within simulation
+error of each other.
+
+
+
+```{r,message=FALSE,warning=FALSE}
+# filter by matching ratio and number of matched sets
+pos.dodge <- 0.5
+filter(res,ConCaseRatio==1,beta==1,nmatch==30,exptype=="continuous",
+       method=="Firth"|method=="logF66"|method=="logF88") %>%
+  ggplot(aes(x=ncov,y=test.rej,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  xlab("number of covariates")+ ylab("estimated power")
+  ggsave(file="power1cts.eps",device="eps")
+  
+filter(res,ConCaseRatio==4,beta==1,nmatch==30,exptype=="continuous",
+       method=="Firth"|method=="logF66"|method=="logF88") %>%
+  ggplot(aes(x=ncov,y=test.rej,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  xlab("number of covariates")+ ylab("estimated power")
+  ggsave(file="power4cts.eps",device="eps")
+```
+
+* Binary exposures: Separate plots for 1:1 and 1:4 matching.
+* 1:1 Without covariates power of all methods comparable.
+With one covariate power of Firth and log-F(1,1) comparable and 
+power of log-F(2,2) lower. With five covariates,
+power of Firth similar to log-F(1,1) for the rare
+exposure and tends toward power of log-F(2,2) as 
+exposure prevalence increases to 0.2. As this happens,
+log-F(1,1) becomes anticonservative and is not shown.
+
+Not sure what's going on with 5 covariates and Binary 0.2??
+* 1:4 power of Firth greater than log-F(1,1) which is greater than
+log-F(2,2). Differences attenuated as you increase the binary
+exposure prevalence and the number of covariates.
+
+
+```{r}
+plotres <- filter(res,ConCaseRatio==1,beta==1,nmatch==30,exptype!="continuous",
+             method=="Firth"|method=="logF11"|method=="logF22")
+levels(plotres$exptype) <- c("bin 0.05","bin 0.10","bin 0.20","cts")
+  ggplot(plotres,aes(x=ncov,y=test.rej,color=method)) +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),position=position_dodge(pos.dodge)) +
+  facet_grid(exptype~.,scales="free") +
+   xlab("number of covariates")+ ylab("estimated power")
+
+  ggsave(file="power1bin.eps",device="eps")
+
+plotres <- filter(res,ConCaseRatio==4,beta==1,nmatch==30,exptype!="continuous",
+             method=="Firth"|method=="logF11"|method=="logF22")
+levels(plotres$exptype) <- c("bin 0.05","bin 0.10","bin 0.20","cts")
+  ggplot(plotres,aes(x=ncov,y=test.rej,color=method)) +
+     scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),position=position_dodge(pos.dodge)) +
+  facet_grid(exptype~.,scales="free") +
+   xlab("number of covariates")+ ylab("estimated power")
+
+  ggsave(file="power4bin.eps",device="eps")
+```
+
+## Appendix
+
+```{r}
+plotresbin <- function(ConCaseRatio,beta,filename) {
+  pos.dodge <- 0.5
+  #plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta&res$method!="CLR",]
+  plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta&res$method!="CLR" & res$exptype!="continuous",]
+  droplevels(plotdat)
+  p <- ggplot(plotdat,aes(x=ncov,y=test.rej,color=method)) +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+   geom_point(position=position_dodge(pos.dodge),size=.3) +
+   geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+   geom_hline(yintercept=0.0, linetype="dashed", color = "grey") +
+   facet_grid(nmatch~exptype,scales="free") + xlab("number of covariates")+ ylab("estimated power") +
+   #facet_grid(nmatch~.,scales="free") + xlab("number of covariates")+ ylab("estimated power") +
+   ggtitle("exposure type") +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+  print(p)
+  test.rejdat <- plotdat[plotdat$test.rej-2*plotdat$test.rej.se >00 | plotdat$test.rej+2*plotdat$test.rej.se <0,c(1:6,8:9)]
+  #ggsave(file=filename,plot=p,device="eps")
+  invisible(test.rejdat)
+}
+
+plotresbin(1,0.5) 
+plotresbin(1,1) 
+plotresbin(1,1.5) 
+plotresbin(4,0.5)
+plotresbin(4,1)
+plotresbin(4,1.5)
+
+plotresexp <- function(ConCaseRatio,beta,filename) {
+  pos.dodge <- 0.5
+  #plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta&res$method!="CLR",]
+  plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta&res$method!="CLR" & res$exptype=="continuous",]
+  droplevels(plotdat)
+  p <- ggplot(plotdat,aes(x=ncov,y=test.rej,color=method)) +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+   geom_point(position=position_dodge(pos.dodge),size=.3) +
+   geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+   geom_hline(yintercept=0.0, linetype="dashed", color = "grey") +
+   facet_grid(nmatch~exptype,scales="free") + xlab("number of covariates")+ ylab("estimated power") +
+   #facet_grid(nmatch~.,scales="free") + xlab("number of covariates")+ ylab("estimated power") +
+   ggtitle("exposure type") +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+  print(p)
+  test.rejdat <- plotdat[plotdat$test.rej-2*plotdat$test.rej.se >00 | plotdat$test.rej+2*plotdat$test.rej.se <0,c(1:6,8:9)]
+  #ggsave(file=filename,plot=p,device="eps")
+  invisible(test.rejdat)
+}
+
+plotresexp(1,0.5) 
+plotresexp(1,1) 
+plotresexp(1,1.5) 
+plotresexp(4,0.5)
+plotresexp(4,1)
+plotresexp(4,1.5)
+```

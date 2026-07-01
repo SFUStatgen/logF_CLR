@@ -1,0 +1,259 @@
+---
+title: "Summary of type 1 error rate results"
+output: pdf_document
+date: "2025-10-25"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load required packages
+
+```{r}
+library(tidyverse)
+library(xtable)
+```
+
+## Read results 
+
+
+```{r}
+res <- read.table("simres.txt",header=TRUE)
+# make sure simulation config parameters are all factors
+for(col in c("method","ConCaseRatio","nmatch","exptype","beta","ncov")) {
+  res[,col] <- factor(res[,col])
+}
+# Alphabetically the factor level "logF1010" of the method variable
+# comes before the other logF's. Move this level to the end.
+res$method <- fct_relevel(res$method,"logF1010",after=Inf)
+```
+
+## Type 1 error rate control
+
+We compared the empirical type 1 error rates of
+unpenalized, Firth- \cite{HeinzePuhr10}, and log-$F$-penalized conditional logistic regression (CLR).
+CLR and Firth sometimes failed so we summarize their failure rates first.
+Failure rates and type 1 error plots for a subset of configurations first,
+then for all configurations, to go in the Supp Methods.
+
+### a) Failure rates of different methods
+
+* 1:1 matching, 30 matched sets, binary exposures
+
+```{r}
+fres <- filter(res,ConCaseRatio==1,
+               method=="Firth"|method=="CLR")
+# only CLR and Firth ever fail
+fres <- droplevels(fres)
+ggplot(fres,aes(x=method,y=pfail)) + #geom_boxplot() +
+  facet_grid(nmatch~exptype) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(nmatch~exptype,scale="free") + xlab("method")+ ylab("estimated failure rate") +
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="fail1.eps",device="eps")
+
+#xt <- xtabs(pfail ~ nmatch + exptype,data=fres)
+#xtable(cbind(xt),caption="Proportion of failed model fits for Firth-penalized CLR for different binary exposure prevalences. Results are shown for datasets comprised of 10 matched sets with 1:1 matching simulated under the null hypothesis of no exposure effect.",digits=4)
+```
+
+* * 1:1 matching, 30 matched sets, continuous exposures -- failure rates
+were negligible (not shown)
+
+* violin plots of failure rates over all simulation configurations
+
+```{r}
+fres <- filter(res,method=="CLR"|method=="Firth")
+ggplot(fres,aes(x=method,y=pfail)) + geom_boxplot()
+```
+
+## b) Plot of type 1 error rates
+
+* 1:1 matching, 30 matched sets, binary exposures
+
+
+```{r}
+pos.dodge <- 0.5
+plotdat <- filter(res,ConCaseRatio==1,beta==0,nmatch==40,exptype!="continuous")
+plotdat$exptype <- factor(droplevels(plotdat$exptype),
+                          labels=c("0.05","0.10","0.20"))
+ggplot(plotdat,aes(x=ncov,y=test.rej,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(~exptype)  +
+  xlab("number of covariates")+ ylab("estimated type 1 error rate") +
+  ggtitle("prevalence") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="t1e.eps",device="eps")
+```
+
+* Caption:
+Estimated type 1 error rates for the eight methods with $\pm 2SE$
+error bars for binary exposures with prevalence 0.05, 0.10
+and 0.20. Results are shown for simulations of datasets with 
+30 matched sets and 1:1 matching. For 
+
+
+* 1:1 matching, 40 matched sets, continuous exposure
+
+
+```{r}
+plotdat <- filter(res,ConCaseRatio==1,nmatch==40,beta==0,exptype=="continuous")
+ggplot(plotdat,aes(x=ncov,y=test.rej,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  xlab("number of covariates")+ ylab("estimated type 1 error rate")
+ggsave(file="t1e_cts.eps",device="eps")
+```
+
+### Material for the discussion
+
+Type 1 error rates and power are low when the 
+binary exposure is rare. For insight into this phenomenon we start 
+with the likehood ratio test from unpenalized conditional logistic regression when there are no covariates.
+As shown in Appendix B, the curvature of the log-likelihood  $l(\beta_E)$
+is $I_0 \frac{\exp(\beta_E)}{(1+\exp(\beta_E))^2}$ (Appendix B), where
+$I_0$ is the number of matched sets that are discordant for the exposure
+and $\beta_E$ is the log-OR for the exposure. When the exposure is rare,
+most subjects are unexposed and $I_0$ is small; i.e., the likelihood is relatively flat. The log-likelihood-ratio and the LR statistic
+is therefore small so that the test tends not to reject the null hypothesis.
+
+
+## EXPERIMENTAL
+
+* Find combinations of estimators and simulation configurations
+for which the estimated type 1 error rate is 
+    * within simulation error of the nominal 0.05, 
+    * more than simulation error *above* the nominal 0.05 (biased tests),
+    * or more than simulation error *below* the nominal 0.05 (conservative tests).
+
+
+```{r}
+good.test <- with(res,beta==0 & abs(test.rej-0.05) <= 2*test.rej.se)
+gres <- res[good.test,
+    c("method","ConCaseRatio","nmatch","exptype","ncov")]
+gtab <- table(gres$method,gres$exptype)
+rowlabs <- c("CLR","Firth","log-$F(1,1)$","log-$F(2,2)$","log-$F(4,4)$","log-$F(6,6)$","log-$F(8,8)$","log-$F(10,10)$")
+collabs <- c("Binary, prev. 0.05","Binary, prev. 0.10","Binary, prev. 0.20","continuous, N(0,1)")
+dimnames(gtab) <- list(rowlabs,collabs)
+biased.test <- with(res,beta==0 & test.rej-2*test.rej.se > 0.05)
+biased.test[is.na(biased.test)] <- FALSE
+bres <- res[biased.test,
+    c("method","ConCaseRatio","nmatch","exptype","ncov")]
+btab<-table(bres$method,bres$exptype)
+dimnames(gtab) <- list(rowlabs,collabs)
+write(biased.test,file="simresBiasedtestRes.txt")
+cons.test <- with(res,beta==0 & test.rej+2*test.rej.se < 0.05)
+cons.test[is.na(cons.test)] <- FALSE
+cres <- res[cons.test,
+    c("method","ConCaseRatio","nmatch","exptype","ncov")]
+ctab <- table(cres$method,cres$exptype)
+dimnames(gtab) <- list(rowlabs,collabs)
+```
+
+* Now format the tables in LaTeX so they can be included in the 
+Supplementary Materials. Cut-and-paste these into the supp mat
+document and tidy up the row and column labels.
+
+```{r}
+library(xtable)
+xtable(gtab,caption="Tests that control type 1 error. For each test and exposure type the table shows the count of simulation configurations (out of 30) in which the estimated type 1 error rate of the tests was within simulation error of the nominal 5%. For each exposure type the 30 simulation configurations are 2 case/control ratios by 5 numbers of matched sets by 3 numbers of covariates.")
+```
+
+```{r}
+xtable(btab,caption="Biased tests. For each test and exposure type the table shows the count of simulation configurations (out of 30) in which the estimated type 1 error rate of the tests was greater than simulation error above the nominal 5%. For each exposure type the 30 simulation configurations are 2 case/control ratios by 5 numbers of matched sets by 3 numbers of covariates.")
+```
+
+```{r}
+xtable(ctab,caption="Conservative tests. For each test and exposure type the table shows the count of simulation configurations (out of 30) in which the estimated type 1 error rate of the tests was more than simulation error below the nominal 5%. For each exposure type the 30 simulation configurations are 2 case/control ratios by 5 numbers of matched sets by 3 numbers of covariates.")
+```
+
+For binary0.05 all tests are conservative in all configs except
+CLR which is biased for 
+
+## Failure rates for Supp Mat
+
+* Under the null hypothesis, only CLR and Firth ever failed. 
+* Table is of exposure type by number of covariates, averaged
+over the number of matched sets and matching.
+
+```{r}
+for(bb in c(0,0.5,1,1.5)){
+out <- NULL
+for(ee in c("binary0.05","binary0.1","binary0.2","continuous")) {
+faildat1 <- filter(res,ConCaseRatio==1,beta==bb,exptype==ee) 
+ftab1 <- xtabs(pfail ~ nmatch+ncov+method,data=faildat1)
+out <- rbind(out,round(cbind(ftab1[,,1],NA,ftab1[,,2]),4))
+}
+print(xtable(out,caption=paste0("Proportion of failed model fits for unpenalized conditional logistic regression (CLR) and Firth-penalized CLR for different exposure types, numbers of covariates and numbers of matched sets. Results are for 1:1 matching and $\\beta$ = ",bb,"."),digits=4))
+}
+```
+```{r}
+for(bb in c(0,0.5,1,1.5)){
+out <- NULL
+for(ee in c("binary0.05","binary0.1","binary0.2","continuous")) {
+faildat1 <- filter(res,ConCaseRatio==4,beta==bb,exptype==ee) 
+ftab1 <- xtabs(pfail ~ nmatch+ncov+method,data=faildat1)
+out <- rbind(out,round(cbind(ftab1[,,1],NA,ftab1[,,2]),4))
+}
+print(xtable(out,caption=paste0("Proportion of failed model fits for unpenalized conditional logistic regression (CLR) and Firth-penalized CLR for different exposure types, numbers of covariates and numbers of matched sets. Results are for 1:4 matching and $\\beta$ = ",bb,"."),digits=4))
+}
+```
+
+* Classify according to failure by CLR and failure by Firth. 
+What are the Firth and log-F(22) estimates? Have to do another simulation.
+
+
+```{r}
+indConfig <- res$ConCaseRatio==1 & res$nmatch==10 & 
+  res$exptype=="binary0.05" & res$beta==0 & res$ncov==0
+res[indConfig,]
+```
+
+## Plots of the estimated type 1 error rates 
+
+* Not sure if plots of type 1 error rates are useful
+but they are included here in case. 
+
+* There are too many simulation configurations to fit
+all on one plot so we split the results by the number
+of matching controls.
+
+
+```{r}
+pos.dodge <- 0.5
+filter(res,ConCaseRatio==1,beta==0) %>%
+  ggplot(aes(x=ncov,y=test.rej,color=method)) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~exptype) + xlab("number of covariates")+ ylab("estimated type 1 error rate") +
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="t1e_1to1.eps",device="eps")
+```
+
+* Summary of 1:4 matching results:
+    * blah
+
+```{r}
+filter(res,ConCaseRatio==4,beta==0) %>%
+  ggplot(aes(x=ncov,y=test.rej,color=method)) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~exptype) + xlab("number of covariates")+ ylab("estimated type 1 error rate") +
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="t1e_1to4.eps",device="eps")
+```

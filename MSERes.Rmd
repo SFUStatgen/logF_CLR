@@ -1,0 +1,243 @@
+---
+title: "Summary of MSE results"
+output: pdf_document
+date: "2024-05-25"
+---
+
+```{r setup, include=FALSE, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load required packages
+
+```{r}
+library(tidyverse)
+```
+
+## Read results 
+
+```{r}
+res <- read.table("simres.txt",header=TRUE)
+# make sure simulation config parameters are all factors
+for(col in c("method","ConCaseRatio","nmatch","exptype","beta","ncov")) {
+  res[,col] <- factor(res[,col])
+}
+# Alphabetically the factor level "logF1010" of the method variable
+# comes before the other logF's. Move this level to the end.
+res$method <- fct_relevel(res$method,"logF1010",after=Inf)
+```
+
+
+* We only show cover results for tests found to control
+type 1 error.
+
+```{r}
+biased.test <- scan(file="simresBiasedtestRes.txt",what=logical())
+all.configs <- with(res,paste(method,ConCaseRatio,nmatch,exptype,ncov,sep=":"))
+biased.configs <- all.configs[biased.test]
+drop <- rep(FALSE,nrow(res))
+for(i in 1:length(biased.configs)){
+  drop[all.configs==biased.configs[i]] <- TRUE
+}
+res <- res[!drop,]
+```
+
+Also reduce to recommended df for the logF. Recommended is logF11 or logF22
+for binary exposures and logF66 or logF88 for continuous exposures.
+
+```{r}
+keep <- 
+  (res$exptype!="continuous" & (res$method %in% c("CLR","Firth","logF11","logF22"))) | 
+  (res$exptype=="continuous" & (res$method %in% c("CLR","Firth","logF66","logF88")))
+res <- res[keep,]
+```
+
+
+
+## Summary
+
+* MSE decreases with the amount of data (number of controls per 
+matched set and/or number of matched sets) and increases slightly
+with the effect size.
+    * In the results shown below we fix values of these simulation
+    configuration variables
+* MSE decreases as we increase the prevalence of the binary exposure, and
+the MSE for the continuous exposure is greater than for the binary 
+exposures (refer to intepretation of exposure effect for different exposure distributions).
+* Slight decrease as we decrease the number of covariates. Tie back to
+events per variable.
+
+* FIX: To compare the MSE of the different methods we choose a combination of 
+exposure effect, number of controls per matched
+set and number of matched sets. Do plots of estimated
+MSE for select exposure types. Plot the MSE for the different
+estimators as the number of covariates changes.
+* Comprehensive plots that show all the MSE estimates are included in the 
+Appendix.
+* Due to its large bias, the MSE of CLR is so big that it obcures the
+other results and so is excluded.
+* Overall trends are analogous to power results: MSE lower as the amount of data (matched sets and/or matched controls) and the events-per-variable increase.
+* For binary exposures, log-F22 generally has the lowest estimated MSE.
+* For continuous exposures, log-F66 generally has the lowest estimated MSE
+* Firth has notably higher MSE than the log-F methods when there is a 
+paucity of data, but is similar to the log-F methods when there is enough 
+data (e.g, 30 or more matched sets)
+
+```{r}
+plotres <- function(ConCaseRatio,beta,filename) {
+  pos.dodge <- 0.5
+  plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta&res$method!="CLR",]
+  #plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta,]
+  droplevels(plotdat)
+  levels(plotdat$exptype) <-c("bin 0.05","bin 0.10","bin 0.20", "cts") 
+  p <- ggplot(plotdat,aes(x=ncov,y=MSE,color=method)) +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL)) +
+   geom_point(position=position_dodge(pos.dodge),size=.3) +
+   geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge)) +
+   facet_grid(exptype~nmatch,scales="free") + xlab("number of covariates")+ ylab("estimated MSE") +
+   ggtitle("number of matched sets") +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+  print(p)
+  MSEdat <- plotdat[plotdat$MSE-2*plotdat$MSE.se >00 | plotdat$MSE+2*plotdat$MSE.se <0,c(1:6,8:9)]
+  ggsave(file=filename,plot=p,device="eps")
+  invisible(MSEdat)
+}
+
+plotres(1,0.5,"MSE_1to1_beta0.5.eps") 
+plotres(1,1,"MSE_1to1_beta1.0.eps") 
+plotres(1,1.5,"MSE_1to1_beta1.5.eps") 
+
+plotres(4,0.5,"MSE_1to4_beta0.5.eps")
+plotres(4,1,"MSE_1to4_beta1.0.eps")
+plotres(4,1.5,"MSE_1to4_beta1.5.eps")
+```
+
+## Targetted plots of the estimated MSE
+
+* Show results for 30 matched sets, $\beta=1$ and 1:1 matching with 
+either a binary exposure of prevalence 0.1 or a continuous exposure.
+* For the binary exposure, the MSE of Firth similar to log-$F(1,1)$
+and both are higher than the MSE of log-$F(2,2)$; this finding
+is generally true, except in 
+very data-poor configurations (e.g., 10 matched sets)
+where the MSE of Firth is higher than log-F11.
+* For the continuous exposure, the MSE of Firth is higher the MSE of
+log-$F(6,6)$ and log-$F(8,8)$ and the two log-F methods are similar. 
+In these results log-$F(8,8)$ has slightly lower MSE than log-$F(6,6)$ but results are mixed, with log-$F(6,6)$  having lower MSE in some configurations.
+
+```{r,message=FALSE,warning=FALSE}
+# filter by matching ratio and number of matched sets
+pos.dodge <- 0.5
+filter(res,ConCaseRatio==1,beta==1,nmatch==30,exptype=="binary0.1",
+       method=="Firth"|method=="logF11"|method=="logF22") %>%
+  ggplot(aes(x=ncov,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge))
+ ggsave(file="MSE1bin.eps",device="eps")
+filter(res,ConCaseRatio==1,beta==1,nmatch==30,exptype=="continuous",
+       method=="Firth"|method=="logF66"|method=="logF88") %>%
+  ggplot(aes(x=ncov,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge))
+ggsave(file="MSE1cts.eps",device="eps")
+```
+
+*  Binary exposures: separate plots for 1:1 and 1:4
+* 1:1 Firth generally comparable to log-F(1,1). Log-F(2,2)
+lower.
+* 1:4 similar but differences less pronounced.
+
+```{r}
+filter(res,ConCaseRatio==1,beta==1,nmatch==30,exptype!="continuous",
+             method=="Firth"|method=="logF11"|method=="logF22") %>%
+  ggplot(aes(x=ncov,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),position=position_dodge(pos.dodge)) +
+  facet_grid(exptype~.,scales="free") 
+
+filter(res,ConCaseRatio==4,beta==1,nmatch==30,exptype!="continuous",
+             method=="Firth"|method=="logF11"|method=="logF22") %>%
+  ggplot(aes(x=ncov,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),position=position_dodge(pos.dodge)) +
+  facet_grid(exptype~.,scales="free") 
+```
+
+
+## Appendix
+
+* CLR has huge MSE and messes up the plots, so exclude.
+* Plots for fixed case:control ratio and exposure type. 
+```{r}
+filter(res,ConCaseRatio==1,exptype == "binary0.05",method!="CLR") %>%
+  ggplot(aes(x=beta,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov,scales="free") +
+  ggtitle("1:1 matching, binary exposure w/ prevalence 0.05")
+filter(res,ConCaseRatio==4,exptype == "binary0.05",method!="CLR") %>%
+  ggplot(aes(x=beta,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov,scales="free") +
+  ggtitle("1:4 matching, binary exposure w/ prevalence 0.05")
+##----------------
+filter(res,ConCaseRatio==1,exptype == "binary0.1",method!="CLR") %>%
+  ggplot(aes(x=beta,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov,scales="free") +
+  ggtitle("1:1 matching, binary exposure w/ prevalence 0.1")
+filter(res,ConCaseRatio==4,exptype == "binary0.1",method!="CLR") %>%
+  ggplot(aes(x=beta,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov,scales="free") +
+  ggtitle("1:4 matching, binary exposure w/ prevalence 0.1")
+##----------------
+filter(res,ConCaseRatio==1,exptype == "binary0.2",method!="CLR") %>%
+  ggplot(aes(x=beta,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov,scales="free") +
+  ggtitle("1:1 matching, binary exposure w/ prevalence 0.2")
+filter(res,ConCaseRatio==4,exptype == "binary0.2",method!="CLR") %>%
+  ggplot(aes(x=beta,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov,scales="free") +
+  ggtitle("1:4 matching, binary exposure w/ prevalence 0.2")
+##----------------
+filter(res,ConCaseRatio==1,exptype == "continuous",method!="CLR") %>%
+  ggplot(aes(x=beta,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov,scales="free") +
+  ggtitle("1:1 matching, continuous")
+filter(res,ConCaseRatio==4,exptype == "continuous",method!="CLR") %>%
+  ggplot(aes(x=beta,y=MSE,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov,scales="free") +
+  ggtitle("1:4 matching, continuous exposure")
+```
+

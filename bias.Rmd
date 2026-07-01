@@ -1,0 +1,252 @@
+---
+title: "Summary of bias results"
+output: pdf_document
+date: "2024-05-25"
+---
+
+```{r setup, include=FALSE, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load required packages
+
+```{r}
+library(tidyverse)
+```
+
+## Read results 
+
+```{r}
+res <- read.table("simres.txt",header=TRUE)
+# make sure simultion config parameters are all factors
+for(col in c("method","ConCaseRatio","nmatch","exptype","beta","ncov")) {
+  res[,col] <- factor(res[,col])
+}
+# Alphabetically the factor level "logF1010" of the method variable
+# comes before the other logF's. Move this level to the end.
+res$method <- fct_relevel(res$method,"logF1010",after=Inf)
+```
+
+
+* We only show bias results for tests found to control
+type 1 error?? SHOW ALL FOR NOW
+
+```{r,eval=FALSE}
+biased.test <- scan(file="simresBiasedtestRes.txt",what=logical())
+all.configs <- with(res,paste(method,ConCaseRatio,nmatch,exptype,ncov,sep=":"))
+biased.configs <- all.configs[biased.test]
+for(i in 1:length(biased.configs)){
+  res[all.configs==biased.configs[i],"bias"] <- NA
+}
+```
+
+## CLR
+
+* Bias of CLR always away from zero and greater than the other methods,
+to the point where plots that include CLR obscure the comparison of
+the other methods
+    * Note: bias estimates are not trustworthy when the failure rate is high.
+* Tweak the following filtering to see the effect of sample size, 
+number of covariates, and effect size on bias of CLR.
+
+```{r}
+resCLR <- filter(res,method=="CLR",ConCaseRatio==1,beta==1,exptype=="binary0.1")
+round(xtabs(bias ~ ncov + nmatch,data=resCLR),4)
+```
+
+## All results (other than CLR)
+
+* Fix matching and beta for matching 1:1, 1:4, beta 0, .5, 1, 1.5
+```{r}
+plotres <- function(ConCaseRatio,beta,filename) {
+  pos.dodge <- 0.5
+  #plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta&res$method!="CLR",]
+  plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta&res$method!="CLR",]
+  droplevels(plotdat)
+  p <- ggplot(plotdat,aes(x=ncov,y=bias,color=method)) +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+   geom_point(position=position_dodge(pos.dodge),size=.3) +
+   geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge)) +
+   geom_hline(yintercept=0.0, linetype="dashed", color = "grey") +
+   facet_grid(nmatch~exptype,scales="free") + xlab("number of covariates")+ ylab("estimated bias") +
+   #facet_grid(nmatch~.,scales="free") + xlab("number of covariates")+ ylab("estimated bias") +
+   ggtitle("exposure type") +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+  print(p)
+  biasdat <- plotdat[plotdat$bias-2*plotdat$bias.SE >00 | plotdat$bias+2*plotdat$bias.SE <0,c(1:6,8:9)]
+  ggsave(file=filename,plot=p,device="eps")
+  invisible(biasdat)
+}
+
+plotres(1,0,"bias_1to1_beta0.eps") #slight pos bias for 5 covs, nmatch=20
+plotres(1,0.5,"bias_1to1_beta0.5.eps") #slight pos bias for 5 covs, nmatch=20
+plotres(1,1,"bias_1to1_beta1.0.eps") #slight pos bias for 5 covs, nmatch=20
+plotres(1,1.5,"bias_1to1_beta1.5.eps") #slight pos bias for 5 covs, nmatch=20
+
+plotres(4,0,"bias_1to4_beta0.eps")
+plotres(4,0.5,"bias_1to4_beta0.5.eps")
+plotres(4,1,"bias_1to4_beta1.0.eps")
+plotres(4,1.5,"bias_1to4_beta1.5.eps")
+```
+
+
+## Select results
+
+```{r}
+plotres.select <- function(ConCaseRatio,beta,filename) {
+  pos.dodge <- 0.5
+  plotdat <- res[res$ConCaseRatio==ConCaseRatio&res$beta==beta&res$method!="CLR"& (res$nmatch==10|res$nmatch==30)&(res$exptype=="binary0.1"|res$exptype=="continuous"),]
+  droplevels(plotdat)
+  p <- ggplot(plotdat,aes(x=ncov,y=bias,color=method)) +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+   geom_point(position=position_dodge(pos.dodge),size=.3) +
+   geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge)) +
+   geom_hline(yintercept=0.0, linetype="dashed", color = "grey") +
+   facet_grid(nmatch~exptype,scales="free") + xlab("number of covariates")+ ylab("estimated bias") +
+   #facet_grid(nmatch~.,scales="free") + xlab("number of covariates")+ ylab("estimated bias") +
+   ggtitle("exposure type") +
+  theme(plot.title = element_text(hjust = 0.5, size = 11))
+  print(p)
+  biasdat <- plotdat[plotdat$bias-2*plotdat$bias.SE >00 | plotdat$bias+2*plotdat$bias.SE <0,c(1:6,8:9)]
+  ggsave(file=filename,plot=p,device="eps")
+  invisible(biasdat)
+}
+plotres.select(1,1,"bias1.eps")
+```
+## Summary
+
+* Firth is nearly unbiased always. Log-F(1,1) is bias negatively biased for continuous exposure and approximately unbiased for binary exposures. 
+Log-F(2,2) is negatively biased.
+* Comprehensive plots that show all the bias estimates are included in the 
+Appendix.
+
+## Targetted plots of the estimated bias
+
+* Continuous exposure, separate results for 1:1 and 1:4 matching
+
+* 1:1 and 1:4
+    * Firth approximately unbiased with no covariates, tending
+    toward a positive bias as the number of covariates increases.
+    * Log-F(6,6) negatively biased at no covariates, tending towards
+    unbiased as the number of covariates increases.
+    * Log-F(8,8) stronger negative bias than log-F(6,6).
+
+```{r,message=FALSE,warning=FALSE}
+# filter by matching ratio and number of matched sets
+pos.dodge <- 0.5
+filter(res,ConCaseRatio==1,beta==1,nmatch==30,exptype=="continuous",
+       method=="Firth"|method=="logF66"|method=="logF88") %>%
+  ggplot(aes(x=ncov,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge))
+
+filter(res,ConCaseRatio==4,beta==1,nmatch==30,exptype=="continuous",
+       method=="Firth"|method=="logF66"|method=="logF88") %>%
+  ggplot(aes(x=ncov,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge))
+```
+
+*  Binary exposures: separate plots for 1:1 and 1:4
+* 1:1 bias of Firth and log-F(1,1) small compared to 
+downwardly-biased log-F(2,2).
+* 1:4 bias of Firth near zero, log-F(1,1) negative bias
+that increases toward unbiased as the number of covariates
+increases. Log-F(2,2) has a stronger negative bias
+than log_F(2,2).
+
+```{r}
+filter(res,ConCaseRatio==1,beta==1,nmatch==30,exptype!="continuous",
+             method=="Firth"|method=="logF11"|method=="logF22") %>%
+  ggplot(aes(x=ncov,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),position=position_dodge(pos.dodge)) +
+  facet_grid(exptype~.,scales="free") 
+
+filter(res,ConCaseRatio==4,beta==1,nmatch==30,exptype!="continuous",
+             method=="Firth"|method=="logF11"|method=="logF22") %>%
+  ggplot(aes(x=ncov,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),position=position_dodge(pos.dodge)) +
+  facet_grid(exptype~.,scales="free") 
+```
+
+
+## Appendix
+
+* Plots for fixed case:control ratio and exposure type. 
+```{r}
+filter(res,ConCaseRatio==1,exptype == "binary0.05") %>%
+  ggplot(aes(x=beta,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov, scale="free") +
+  ggtitle("1:1 matching, binary exposure w/ prevalence 0.05")
+filter(res,ConCaseRatio==4,exptype == "binary0.05") %>%
+  ggplot(aes(x=beta,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov, scale="free") +
+  ggtitle("1:4 matching, binary exposure w/ prevalence 0.05")
+##----------------
+filter(res,ConCaseRatio==1,exptype == "binary0.1") %>%
+  ggplot(aes(x=beta,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov, scale="free") +
+  ggtitle("1:1 matching, binary exposure w/ prevalence 0.1")
+filter(res,ConCaseRatio==4,exptype == "binary0.1") %>%
+  ggplot(aes(x=beta,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov, scale="free") +
+  ggtitle("1:4 matching, binary exposure w/ prevalence 0.1")
+##----------------
+filter(res,ConCaseRatio==1,exptype == "binary0.2") %>%
+  ggplot(aes(x=beta,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov, scale="free") +
+  ggtitle("1:1 matching, binary exposure w/ prevalence 0.2")
+filter(res,ConCaseRatio==4,exptype == "binary0.2") %>%
+  ggplot(aes(x=beta,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov, scale="free") +
+  ggtitle("1:4 matching, binary exposure w/ prevalence 0.2")
+##----------------
+filter(res,ConCaseRatio==1,exptype == "continuous") %>%
+  ggplot(aes(x=beta,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov, scale="free") +
+  ggtitle("1:1 matching, continuous")
+filter(res,ConCaseRatio==4,exptype == "continuous") %>%
+  ggplot(aes(x=beta,y=bias,color=method)) +
+  geom_point(position=position_dodge(pos.dodge),size=.3) +
+  geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE),
+                 position=position_dodge(pos.dodge))  +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+  facet_grid(nmatch~ncov) +
+   ylim(0,1) +
+  ggtitle("1:4 matching, continuous exposure")
+```
+

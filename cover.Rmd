@@ -1,0 +1,85 @@
+---
+title: "Summary of cover results"
+output: pdf_document
+date: "2024-05-25"
+---
+
+```{r setup, include=FALSE, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load required packages
+
+```{r}
+library(tidyverse)
+```
+
+## Read results 
+
+```{r}
+res <- read.table("simres.txt",header=TRUE)
+# make sure simulation config parameters are all factors
+for(col in c("method","ConCaseRatio","nmatch","exptype","beta","ncov")) {
+  res[,col] <- factor(res[,col])
+}
+# Alphabetically the factor level "logF1010" of the method variable
+# comes before the other logF's. Move this level to the end.
+res$method <- fct_relevel(res$method,"logF1010",after=Inf)
+```
+
+
+* We only show cover results for tests found to control
+type 1 error.
+
+```{r}
+biased.test <- scan(file="simresBiasedtestRes.txt",what=logical())
+all.configs <- with(res,paste(method,ConCaseRatio,nmatch,exptype,ncov,sep=":"))
+biased.configs <- all.configs[biased.test]
+drop <- rep(FALSE,nrow(res))
+for(i in 1:length(biased.configs)){
+  drop[all.configs==biased.configs[i]] <- TRUE
+}
+res <- res[!drop,]
+```
+
+Also reduce to recommended df for the logF. Recommended is logF11 or logF22
+for binary exposures and logF66 or logF88 for continuous exposures.
+
+```{r}
+keep <- 
+  (res$exptype!="continuous" & (res$method %in% c("CLR","Firth","logF11","logF22"))) | 
+  (res$exptype=="continuous" & (res$method %in% c("CLR","Firth","logF66","logF88")))
+res <- res[keep,]
+```
+
+## Summary
+
+* Firth is nearly unbiased always. Log-F(1,1) is negatively biased for continuous exposure and approximately unbiased for binary exposures. 
+Log-F(2,2) is negatively biased.
+
+
+## List of biased CI procedures that control type 1 error rate
+
+```{r}
+biascover1 <- res[res$cover + 2*res$cover.se < 0.95,c(1:6,8,12,13)]
+biascover1[,7:9] <- round(biascover1[,7:9],3)
+biascover2 <- res[res$cover - 2*res$cover.se > 0.95,c(1:6,8,12,13)]
+biascover2[,7:9] <- round(biascover2[,7:9],3)
+
+# View(biascover1)
+# View(biascover2)
+```
+
+* Biascover1 -- under-coverage
+    *  Lots of CLR: 60 simulation configurations, tends to be from bias
+    of the estimator away from 0 (51/60 = 85\%) but is sometimes from
+    bias towards zero.
+    * **no** Firth
+    * After filtering to log-F's with recommended df. still 7 logF11, 8 logF22,
+    16 logF66 and 27 logF88. Log-F22 and higher df are from too much 
+    shrinkage (i.e., bias toward 0).
+    Log-F11 is a mix of bias toward 0 and away from 0 -- away from 0 when
+    there are five covariates and log-F11 does not shrink enough (as noted
+    in the bias results), but otherwise towards zero.
+
+
