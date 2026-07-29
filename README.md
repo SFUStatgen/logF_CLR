@@ -1,7 +1,6 @@
 ---
 title: "Log-F-penalized Conditional Logistic Regression for Sparse Data"
 author: Ying Yu, Jiying Wen, Jinko Graham, Brad McNeney
-output: pdf_document
 ---
 
 This repository contains the R code for the data analyses and
