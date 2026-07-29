@@ -1,7 +1,6 @@
 ---
 title: "Example Data Analyses for: Log-F-penalized Conditional Logistic Regression for Sparse Data"
 author: Ying Yu, Jiying Wen, Jinko Graham, Brad McNeney
-output: pdf_document
 ---
 
 The Supplementary Materials of the 
