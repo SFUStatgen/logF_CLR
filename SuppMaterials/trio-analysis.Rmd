@@ -1,0 +1,292 @@
+---
+title: "Data applications: Type 2 diabetes trio data"
+author: ""
+date: "`r format(Sys.Date(), '%Y-%m-%d')`"
+output:
+  pdf_document:
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+library(survival)
+library(coxphf)
+library(tidyverse)
+source("../SimStudy/clogitf.R") # clogitf() for Firth and clogitlogF() for log-F
+source("../SimStudy/logFmatched.R") # data augmentation function 
+```
+
+## Purpose
+
+This document reconstructs the case-parent trio analysis used in the manuscript.
+It explains the conditional-likelihood formulation, shows how Mendelian
+transmission probabilities enter as offsets in conditional logistic regression,
+and fits an additive per-allele model for the Z+2 allele at the
+\textit{GCK1} microsatellite locus.
+
+The reconstructed data are based on the counts reported by
+Frayling et al. (1999). The affected child is treated as the case, and the
+genotypes that could have been transmitted by the same parents are treated as
+matched pseudo-controls. Parental mating type defines the matched set.
+
+## Data and notation
+
+Let
+
+- \(G\in\{0,1,2\}\) denote the number of copies of the Z+2 allele carried by
+  the child;
+- \(G_p=(g_{p1},g_{p2})\) denote the parental Z+2 allele counts;
+- \(D=1\) identify the observed affected child and \(D=0\) identify a
+  pseudo-control genotype.
+
+The original draft described the genetic variants as SNPs. That is not correct
+for this application: \textit{GCK1} is a microsatellite locus, and Z+2 is one
+of its alleles.
+
+The reported affected-child counts are:
+
+```{r affected-counts}
+affected_counts <- data.frame(
+  mating = c("0x1", "0x1", "1x1", "1x1"),
+  observed_g = c(0, 1, 0, 1),
+  n = c(10, 15, 1, 1)
+)
+
+affected_counts
+```
+
+## Conditional likelihood for trio data
+
+Conditional on parental mating type \(G_p\), the probability that the affected
+child has genotype \(g\) is proportional to
+
+\[
+\exp\{z(g)^T\beta\}P(G=g\mid G_p),
+\]
+
+where \(P(G=g\mid G_p)\) is the Mendelian transmission probability. Thus the
+likelihood contribution of one trio is
+
+\[
+\frac{
+  \exp\{z(g)^T\beta\}P(G=g\mid G_p)
+}{
+  \sum_{g^\ast}
+  \exp\{z(g^\ast)^T\beta\}P(G=g^\ast\mid G_p)
+}.
+\]
+
+This has the form of a conditional logistic likelihood with linear predictor
+
+\[
+z(g)^T\beta+\log P(G=g\mid G_p).
+\]
+
+Therefore, the logarithm of the Mendelian transmission probability enters the
+conditional logistic regression as an offset.
+
+Because an additive constant within a matched set cancels from the conditional
+likelihood, one may use either the exact log probabilities or any proportional
+weights. For a \(1\times1\) mating, for example,
+
+\[
+P(G=0\mid G_p)=\frac14,\qquad
+P(G=1\mid G_p)=\frac12,\qquad
+P(G=2\mid G_p)=\frac14.
+\]
+
+The exact offsets are
+\(\{\log(1/4),\log(1/2),\log(1/4)\}\). Subtracting the common value
+\(\log(1/4)\) gives the equivalent offsets
+
+\[
+\{0,\log 2,0\}.
+\]
+
+### Additive per-allele model
+
+The manuscript reports a single genotype relative risk for each additional
+copy of the Z+2 allele. The corresponding model is
+
+\[
+z(g)=g
+\]
+
+and
+
+\[
+\operatorname{GRR}=\exp(\beta).
+\]
+
+This is different from a two-parameter model with separate genotype effects.
+If one writes
+
+\[
+z(g)=
+\begin{cases}
+(0,0), & g=0,\\
+(1,0), & g=1,\\
+(1,1), & g=2,
+\end{cases}
+\]
+
+then the parameters are log relative-risk increments:
+
+\[
+\exp(\beta_1)
+=
+\frac{P(D=1\mid G=1)}{P(D=1\mid G=0)},
+\qquad
+\exp(\beta_2)
+=
+\frac{P(D=1\mid G=2)}{P(D=1\mid G=1)}.
+\]
+
+The \(\beta_j\) themselves are log-GRRs, not GRRs. In these reconstructed data,
+no affected child has genotype \(G=2\), so the two-parameter model has no information about \(\beta_2\). The single-parameter additive model is therefore the model used
+below.
+
+## Reconstructing the matched pseudo-control data
+
+For a \(0\times1\) mating, the possible offspring genotypes are 0 and 1, each
+with probability \(1/2\).
+
+For a \(1\times1\) mating, the possible offspring genotypes are 0, 1, and 2,
+with probabilities \(1/4\), \(1/2\), and \(1/4\), respectively.
+
+Each observed affected child defines one matched set. The observed genotype is
+coded as the case, and the other possible offspring genotypes are coded as
+pseudo-controls.
+
+```{r reconstruct-data}
+make_set <- function(stratum, mating, observed_g) {
+  if (mating == "0x1") {
+    # Mendelian probabilities: P(G=0)=1/2, P(G=1)=1/2
+    g <- c(0, 1)
+
+  } else if (mating == "1x1") {
+    # Mendelian probabilities: P(G=0)=1/4, P(G=1)=1/2, P(G=2)=1/4
+    # Represent these probabilities by multiplicities 1:2:1.
+    g <- c(0, 1, 1, 2)
+
+  } else {
+    stop("Unsupported mating type: ", mating)
+  }
+
+  case <- integer(length(g))
+
+  # Mark exactly one copy of the observed genotype as the affected child.
+  observed_rows <- which(g == observed_g)
+
+  if (length(observed_rows) == 0L) {
+    stop(
+      "Observed genotype ", observed_g,
+      " is incompatible with mating type ", mating, "."
+    )
+  }
+
+  case[observed_rows[1L]] <- 1L
+
+  data.frame(
+    stratum = stratum,
+    mating = mating,
+    g = g,
+    case = case
+  )
+}
+
+sets <- vector("list", sum(affected_counts$n))
+s <- 1L
+
+for (i in seq_len(nrow(affected_counts))) {
+  for (j in seq_len(affected_counts$n[i])) {
+    sets[[s]] <- make_set(
+      stratum = s,
+      mating = affected_counts$mating[i],
+      observed_g = affected_counts$observed_g[i]
+    )
+    s <- s + 1L
+  }
+}
+
+trio_dat <- do.call(rbind, sets)
+row.names(trio_dat) <- NULL
+
+head(trio_dat, 12)
+```
+
+Basic checks:
+
+```{r checks}
+stopifnot(all(tapply(trio_dat$case, trio_dat$stratum, sum) == 1))
+stopifnot(nlevels(factor(trio_dat$stratum)) == 27)
+stopifnot(nrow(trio_dat) == 58)
+
+with(trio_dat, table(mating, g, case))
+```
+
+## Fitting the additive conditional logistic regression
+
+```{r fit-clr}
+library(survival)
+
+fit <- clogit(
+  case ~ g + strata(stratum),
+  data = trio_dat,
+  method = "exact"
+)
+
+summary(fit)
+```
+
+
+```{r}
+trio_dat$matchedset <- trio_dat$stratum
+form <- formula(case ~ g)
+#trio.aug0 <- augment.logFmatched(form,trio_dat,m=0) # doesn't work. Not set up for m=0
+trio.aug0 <- trio_dat; trio.aug0$weights <- 1 # add weights manually
+UCLR <- clogitlogF(form,trio.aug0,maxit=500)
+UCLR
+exp(c(UCLR$ci.lower,UCLR$ci.upper))
+```
+
+```{r}
+FCLR <- clogitf(form,trio_dat,maxit=500)
+FCLR
+confint(FCLR)
+exp(confint(FCLR))
+```
+
+The uninformative prior for the binary genotype effect is log-F(1,1). 
+
+```{r}
+trio.augU <- augment.logFmatched(form,trio_dat,m=1)
+logFU <- clogitlogF(form,trio.augU)
+logFU
+confint(logFU)
+exp(confint(logFU))
+```
+
+
+The weakly informative prior is log-F(2,2).
+
+```{r}
+trio.augW <- augment.logFmatched(form,trio_dat,m=2)
+logFW <- clogitlogF(form,trio.augW)
+logFW
+confint(logFW)
+exp(confint(logFW))
+```
+
+
+
+
+## Session information for the trio data analysis
+
+
+```{r session-info-trio}
+sessionInfo()
+```

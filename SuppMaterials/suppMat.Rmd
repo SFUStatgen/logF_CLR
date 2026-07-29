@@ -1,0 +1,42 @@
+---
+title: "Supplementary Materials for Log-F-penalized Conditional Logistic Regression for Sparse Data"
+author: Ying Yu, Jiying Wen, Jinko Graham, Brad McNeney
+output:
+  pdf_document:
+    keep_tex: true
+    number_sections: true
+geometry: "left=1cm,right=1cm,top=2cm,bottom=2cm"
+header-includes:
+  - \usepackage{longtable}
+  - \usepackage{booktabs}
+  - \usepackage{pdflscape}
+---
+
+In these supplementary materials we give further details on the 
+analyses of the DES and trio data and provide a table of the 
+complete simulation results.
+
+# DES data analysis
+
+```{r child="DES-analysis.Rmd"}
+```
+
+\clearpage
+
+# Trio data analysis
+
+```{r child="trio-analysis.Rmd"}
+```
+
+\clearpage
+
+# Complete simulation results
+
+The full simulation results table is available on GitHub. 
+
+```{r}
+results <- read.table("https://raw.githubusercontent.com/SFUStatgen/logF_CLR/refs/heads/main/simres.txt",
+                      header=TRUE)
+```
+
+\input{../SimStudy/simresComplete.tex}

@@ -1,0 +1,42 @@
+---
+title: "Full simulation results"
+output: pdf_document
+date: "2024-05-25"
+---
+
+```{r setup, include=FALSE, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+The full simulation results table is available on GitHub. Here we read 
+this dataframe into R and use `xtable()` to print it as a latex table.
+
+```{r}
+results <- read.table("https://raw.githubusercontent.com/SFUStatgen/logF_CLR/refs/heads/main/simres.txt",header=TRUE)
+names(results)[2] <- "nCon" # replace ConCaseRatio with something shorter
+```
+
+```{r}
+library(xtable)
+
+tab <- xtable(
+  results,
+  caption = "Complete simulation results.",
+  label = "tab:complete-results",
+  digits = c(rep(0,5),1,0,rep(4,9)),
+  align = c("l", rep("r",ncol(results)))
+)
+
+print(
+  tab,
+  include.rownames = FALSE,
+  tabular.environment = "longtable",
+  floating = FALSE,
+  booktabs = TRUE,
+  size = "scriptsize",
+  sanitize.text.function = identity,
+  file = "simresComplete.tex"
+)
+```
+
+

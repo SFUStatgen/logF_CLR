@@ -1,0 +1,122 @@
+---
+title: "Convergence results"
+output: pdf_document
+date: "2026-07-19"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load required packages
+
+```{r}
+library(tidyverse)
+library(xtable)
+```
+
+## Read results 
+
+
+```{r}
+res <- read.table("simres.txt",header=TRUE)
+res$method[res$method=="Firth"] <- "FCLR"
+res$method[res$method=="CLR"] <- "UCLR"
+# make sure simulation config parameters are all factors
+for(col in c("method","ConCaseRatio","nmatch","exptype","beta","ncov")) {
+  res[,col] <- factor(res[,col])
+}
+```
+
+## Non-convergence rates of different methods
+
+
+* Over all simulation configurations (matched set size, number of matched sets, exposure type, exposure effect, and number of covariates) UCLR had the highest non-convergence rate 94.6\% of the time and FCLR had the highest non-convergence rate the remaining 5.4\% of the time.
+
+
+```{r}
+ConCaseRatio <- c(1,4)
+nmatch <- c(10,20,30,40,50)
+exptype <- c("continuous",paste0("binary",c(.05,.10,.20)))
+betas <- c(0:3)/2
+ncov <- c(0,1,5)
+params <- expand.grid(ConCaseRatio,nmatch,exptype,betas,ncov)
+names(params) <- c("ConCaseRatio","nmatch","exptype","beta","ncov")
+mm <- rep(NA,nrow(params))
+for(i in 1:nrow(params)) {
+  ind <- (params[i,"ConCaseRatio"]==res[,"ConCaseRatio"] &
+            params[i,"nmatch"]==res[,"nmatch"] &
+            params[i,"exptype"]==res[,"exptype"] &
+            params[i,"beta"]==res[,"beta"] &
+            params[i,"ncov"] ==res[,"ncov"])
+  pres <- res[ind,1:7]
+  mm[i] <- which.max(pres[,"pfail"]) 
+  #exp.ord <- (pres[pres$method=="UCLR","pfail"]>= pres[pres$method=="FCLR","pfail"]) &
+  #              (pres[pres$method=="FCLR","pfail"]>=pres[pres$method=="logFU","pfail"])
+  #if(!exp.ord) print(pres)
+}
+table(mm)/480
+```
+
+The maximum non-convergence rates for each method are shown below.
+
+```{r}
+tt <- res %>% group_by(method) %>% summarize(max=max(pfail),median=median(pfail))
+```
+
+
+* log-F methods always converged for binary exposures but not always for
+the continuous exposure, though the non-convergence rates were always less than
+0.1\%
+
+* Non-convergence rate is higher the sparser the data. Data are more sparse when
+    * the matched sets are smaller
+    * the number of matched sets is smaller
+    * the number of nuisance covariates is larger
+    * for binary exposures, the exposure prevalence is lower
+
+
+```{r}
+fres <-  res
+fres$pfail.se<- with(fres,sqrt(pfail*(1-pfail)/10000))
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=pfail,color=beta,linetype=ConCaseRatio,shape=method)) + geom_point() + geom_line() +
+  geom_linerange(aes(ymin=pfail-2*pfail.se,ymax=pfail+2*pfail.se)) +
+  facet_grid(nmatch~exptype) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(nmatch~exptype,scale="free") + 
+ # scale_y_continuous(n.breaks = 4) +
+  xlab("number of nuisance covariates")+ ylab("estimated non-convergence rate") +
+  labs(color="exposure effect") +
+  labs(linetype="num. controls")
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="SuppMatSimRes/full_nonconv.eps",device="eps")
+ggsave(file="SuppMatSimRes/full_nonconv.pdf",device="pdf")
+```
+
+
+ Can only see the UCLR results -- redo with just UCLR
+   
+```{r}
+fres <- filter(res,method=="UCLR")
+fres$ncov <- as.numeric(as.character(fres$ncov))
+fres$pfail.se<- with(fres,sqrt(pfail*(1-pfail)/10000))
+ggplot(fres,aes(x=ncov,y=pfail,color=beta,linetype=ConCaseRatio)) + geom_point() + geom_line() +
+  #geom_linerange(aes(ymin=pfail-2*pfail.se,ymax=pfail+2*pfail.se)) +
+  facet_grid(nmatch~exptype) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL),n.breaks=4) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(nmatch~exptype,scale="free") + 
+  #scale_y_continuous(n.breaks = 4) +
+  xlab("number of nuisance covariates")+ ylab("estimated non-convergence rate") +
+  labs(color="exposure effect") +
+  labs(linetype="num. controls") +
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+   
+ggsave(file="nonconv.eps",device="eps")
+ggsave(file="nonconv.pdf",device="pdf")
+```
+

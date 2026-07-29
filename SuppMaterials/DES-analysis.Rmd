@@ -1,0 +1,163 @@
+---
+title: "Data applications: DES data"
+output: pdf_document
+date: "2026-07-21"
+---
+
+```{r, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load packages and functions
+
+We use the following packages:
+
+* `survival` for its `clogit()` function that performs unpenalized conditional logistic regression (UCLR)
+* `coxphf` for its `coxphf()` function (Firth-penalized Cox proportional hazards)
+that is called by `clogitf()` (see below) do to Firth-penalized conditional logistic regression (FCLR), and
+* `tidyverse`
+
+We also load R source files that contain code for the analyses. These 
+files are loaded from local copies, but are also available on 
+GitHub at https://github.com/SFUStatgen/logF_CLR.
+
+* `clogitf.R`: contains the functions `clogitf()` for Firth-penalized conditional 
+logistic regression, following a suggestion by G. Heinze, and `clogitlogF()` for log-F-penalized conditional logistic regression (logFU and logFW).
+* `logFmatched.R`: contains the function `augment.logFmatched()` that 
+augments an input data frame by the pseudo-matched sets needed for log-F-penalized
+conditional logistic regression.
+
+
+```{r}
+library(survival)
+library(coxphf)
+library(tidyverse)
+source("../SimStudy/clogitf.R") # clogitf() for Firth and clogitlogF() for log-F
+source("../SimStudy/logFmatched.R") # data augmentation function 
+```
+
+## DES data
+
+The DES data are available from the GitHub repository.
+
+```{r}
+des <- read.csv("DES.csv")
+```
+
+
+```{r}
+des$matchedset <- des$matched.set # Our code requires that var name is matchedset
+des <- select(des,matchedset,case,DES,matern.smoke)
+summary(des)
+xtabs(~DES + case + matern.smoke,data=des)
+```
+
+UCLR fails:
+
+```{r}
+form <- formula(case ~ DES + matern.smoke)
+des.aug0 <- augment.logFmatched(form,des,m=0)
+UCLR <- try(clogitlogF(form,des.aug0,maxit=500))
+```
+
+FCLR works but throws a warning unless you run it for many iterations.
+
+```{r}
+FCLR <- clogitf(form,des,maxit=500)
+FCLR
+confint(FCLR)
+exp(confint(FCLR))
+```
+
+The uninformative prior for DES and maternal smoking is log-F(1,1). 
+
+```{r}
+des.augU <- augment.logFmatched(form,des,m=1)
+logFU <- clogitlogF(form,des.augU)
+logFU
+confint(logFU)
+exp(confint(logFU))
+```
+
+The uninformative prior for DES and maternal smoking is log-F(2,2). 
+
+```{r}
+des.augW <- augment.logFmatched(form,des,m=2)
+logFW <- clogitlogF(form,des.augW)
+logFW
+confint(logFW)
+exp(confint(logFW))
+```
+
+
+We also plot the profile penalized log likelihoods. For the log-F approaches
+we do this by fixing the DES effect and maximizing over the maternal smoking
+effect, with the DES effect included as an offset. For FCLR we use the output of
+the `coxphfplot()` function.
+
+```{r}
+ profile_ll_logF <- function(beta_t,augdata) {
+    offset <- beta_t * augdata$DES
+    form <- formula(case ~ matern.smoke + strata(matchedset) + offset(offset))
+    fit_t <- survival::clogit(form, data = augdata, weights = augdata$weights,
+                              method = "efron")
+    fit_t$loglik[2]
+ }
+profile_ll_FCLR <- function(formula,data) { # Suggestion from Heinze
+  require(coxphf)
+  data$start = data$matchedset
+  data$stop = data$matchedset+0.1
+  # Change response as done in clogit()
+  newformula = formula
+  newformula[[2]]=substitute(Surv(start,stop,case),list(case=formula[[2]]))
+  environment(newformula) = environment(formula) 
+  p <- coxphfplot(formula=newformula,data=data,profile=~DES)
+  return(p)
+}
+
+
+```
+
+Now run these functions to obtain the profile penalized log likelihoods
+for all the methods.
+
+```{r}
+fclr <- profile_ll_FCLR(form,des)
+beta_t <- fclr[,"DES"]
+fclr <- fclr[,"log-likelihood"]
+uclr <- logfu <- logfw <- rep(NA,length(beta_t))
+for(i in seq_along(beta_t)) {
+  uclr[i] <- profile_ll_logF(beta_t[i],des.aug0)
+  logfu[i] <- profile_ll_logF(beta_t[i],des.augU)
+  logfw[i] <- profile_ll_logF(beta_t[i],des.augW)
+}
+mm <- factor(rep(c("UCLR","FCLR","logFU","logFW"),each=length(beta_t)),
+             levels=c("UCLR","FCLR","logFU","logFW"))
+plotdat <- data.frame(logGRR=rep(beta_t,4),profll=c(uclr,fclr,logfu,logfw),
+                      method=mm)
+```
+
+Finally, we can plot the curves.
+
+```{r}
+ggplot(plotdat,aes(x=logGRR,y=profll,color=method)) + geom_line() +
+   scale_color_manual(values=c("black","#00AFBB","#52854C","#E7B800")) +
+  xlab(expression(paste("log-OR ",beta))) + 
+  ylab("Profile penalized log-likelihood") +
+  geom_vline(xintercept=beta_t[which.max(fclr)],
+             linetype="longdash", color="#00AFBB") +
+  geom_vline(xintercept=beta_t[which.max(logfu)],
+             linetype="longdash", color="#52854C") +
+  geom_vline(xintercept=beta_t[which.max(logfw)],
+             linetype="longdash", color="#E7B800")
+ggsave(file="DESprofile.eps",device="eps")
+ggsave(file="DESprofile.pdf",device="pdf")
+```
+
+## Session information for DES analysis
+
+```{r session-info-DES}
+sessionInfo()
+```
+
+

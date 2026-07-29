@@ -1,0 +1,207 @@
+---
+title: "Inference"
+output: pdf_document
+date: "2026-07-20"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load required packages
+
+```{r}
+library(tidyverse)
+library(xtable)
+```
+
+## Read results 
+
+
+```{r}
+res <- read.table("simres.txt",header=TRUE)
+res$method[res$method=="Firth"] <- "FCLR"
+res$method[res$method=="CLR"] <- "UCLR"
+# make sure simulation config parameters are all factors
+for(col in c("method","ConCaseRatio","nmatch","exptype","beta","ncov")) {
+  res[,col] <- factor(res[,col])
+}
+```
+
+## Type 1 error rate control
+
+
+```{r}
+pos.dodge <- 0.5
+plotdat <- filter(res,beta==0)
+ggplot(plotdat,aes(x=ncov,y=test.rej,shape=method,color=ConCaseRatio)) +
+  geom_point(position=position_dodge(pos.dodge),size=1) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+  facet_grid(nmatch~exptype)  +
+  xlab("number of covariates")+ ylab("estimated type 1 error rate") +
+  labs(color="num. controls") +
+  ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="t1e_full.eps",device="eps")
+ggsave(file="t1e_full.pdf",device="pdf")
+```
+
+
+Difficult to read and not much info. Remove UCLR and restrict figs to 10, 30 or 50 matched sets, continuous exposure or binary prev 0.20. 
+
+
+```{r}
+pos.dodge <- 0.5
+plotdat <- filter(res,beta==0,method!="UCLR",exptype=="binary0.2"|exptype=="continuous",nmatch==10|nmatch==30|nmatch==50)
+ggplot(plotdat,aes(x=ncov,y=test.rej,shape=method,color=ConCaseRatio)) +
+  geom_point(position=position_dodge(pos.dodge),size=2) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+  facet_grid(nmatch~exptype, scales = "free_y") +
+  xlab("number of nuisance covariates")+ ylab("estimated type 1 error rate") +
+  labs(color="num. controls") +
+     ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+```
+
+
+JG type 1 error
+
+```{r}
+pos.dodge <- 0.5
+fres <- res
+fres$ncov <- as.numeric(as.character(fres$ncov))
+plotdat <- filter(fres,ConCaseRatio==1,beta==0,method!="UCLR",exptype=="binary0.05"|exptype=="binary0.2"|exptype=="continuous",nmatch==10|nmatch==50)
+ggplot(plotdat,aes(x=ncov,y=test.rej,linetype=nmatch,shape=nmatch)) +
+   geom_hline(yintercept=0.05, color = "grey",linewidth=2,alpha=.5) +
+  #geom_point(position=position_dodge(pos.dodge),size=2) +
+  geom_point(size=1.5) +
+  geom_line() +
+  #geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+  #               position=position_dodge(pos.dodge)) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se)) +
+  facet_grid(exptype~method, scales = "free_y") +
+  xlab("number of nuisance covariates")+ ylab("estimated type 1 error rate") +
+  labs(color="num. controls") +  labs(shape="number of matched sets") +
+  labs(linetype="number of matched sets") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+
+
+ggsave(file="t1e.eps",device="eps")
+ggsave(file="t1e.pdf",device="pdf")
+```
+
+
+## Power
+
+Start with comprehensive plots of estimated power for each non-zero exposure effect size
+$\beta_E=0.5$, 1.0 and 1.5.
+
+```{r}
+pos.dodge <- 0.5
+plotdat <- filter(res,beta==0.5)
+ggplot(plotdat,aes(x=ncov,y=test.rej,shape=method,color=ConCaseRatio)) +
+  geom_point(position=position_dodge(pos.dodge),size=1) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL)) +
+  facet_grid(exptype~nmatch,scale="free")  +
+  xlab("number of covariates")+ ylab("estimated power to detect exposure effect 0.5") +
+  labs(color="num. controls") +
+  ggtitle("number of matched sets") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="power_full0.5.eps",device="eps")
+ggsave(file="power_full0.5.pdf",device="pdf")
+```
+
+```{r}
+pos.dodge <- 0.5
+plotdat <- filter(res,beta==1)
+ggplot(plotdat,aes(x=ncov,y=test.rej,shape=method,color=ConCaseRatio)) +
+  geom_point(position=position_dodge(pos.dodge),size=1) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL)) +
+  facet_grid(exptype~nmatch,scale="free")  +
+  xlab("number of covariates")+ ylab("estimated power to detect exposure effect 1") +
+  labs(color="num. controls") +
+  ggtitle("number of matched sets") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="power_full1.eps",device="eps")
+ggsave(file="power_full1.pdf",device="pdf")
+```
+
+
+```{r}
+pos.dodge <- 0.5
+plotdat <- filter(res,beta==1.5)
+ggplot(plotdat,aes(x=ncov,y=test.rej,shape=method,color=ConCaseRatio)) +
+  geom_point(position=position_dodge(pos.dodge),size=1) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+   scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL)) +
+  facet_grid(exptype~nmatch,scale="free")  +
+  xlab("number of covariates")+ ylab("estimated power to detect exposure effect 1.5") +
+  labs(color="num. controls") +
+  ggtitle("number of matched sets") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="power_full1.5.eps",device="eps")
+ggsave(file="power_full1.5.pdf",device="pdf")
+```
+
+
+Now a selected results plot for the manuscript similar to the type 1 error
+rate plot, but for exposure effect 1.
+
+```{r}
+pos.dodge <- 0.5
+plotdat <- filter(res,beta==1,method!="UCLR",exptype=="binary0.2"|exptype=="continuous",nmatch==30|nmatch==50)
+biased.test <- with(plotdat,(method=="logFU"&ncov==5&ConCaseRatio==1) |
+                      (method=="logFU"&ncov==5&exptype=="continuous") )
+plotdat <- plotdat[!biased.test,]
+ggplot(plotdat,aes(x=ncov,y=test.rej,shape=method,color=ConCaseRatio)) +
+  geom_point(position=position_dodge(pos.dodge),size=2) +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se),
+                 position=position_dodge(pos.dodge)) +
+   #scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+  facet_grid(exptype~nmatch, scales = "free_y") +
+  xlab("number of nuisance covariates")+ ylab("estimated power, exposure effect 1") +
+  labs(color="num. controls") +
+     ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="power.eps",device="eps")
+ggsave(file="power.pdf",device="pdf")
+```
+
+
+
+JG power
+
+```{r}
+pos.dodge <- 0.5
+plotdat <- filter(fres,ConCaseRatio==1,beta==0.5|beta==1.5,method!="UCLR",exptype=="binary0.05"|exptype=="binary0.2"|exptype=="continuous",nmatch==10|nmatch==50)
+biased.test <- with(plotdat,(method=="logFU"&ncov==5&nmatch==10&exptype=="continuous"))
+plotdat <- plotdat[!biased.test,]
+ggplot(plotdat,aes(x=ncov,y=test.rej,color=beta,linetype=nmatch,shape=nmatch)) +
+  geom_point(size=1.5) + geom_line() +
+  geom_linerange(aes(ymin=test.rej-2*test.rej.se,ymax=test.rej+2*test.rej.se)) +
+  #geom_hline(yintercept=0.05, linetype="dashed", color = "grey") +
+    scale_y_continuous(n.breaks=5) +
+  facet_grid(exptype~method, scales = "free_y") +
+  xlab("number of nuisance covariates")+ ylab("estimated power") +
+  labs(color="exposure effect") + labs(shape="number of matched sets") +
+  labs(linetype="number of matched sets") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+
+
+ggsave(file="power.eps",device="eps")
+ggsave(file="power.pdf",device="pdf")
+```

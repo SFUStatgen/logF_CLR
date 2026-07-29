@@ -1,0 +1,1080 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+\documentclass[
+]{article}
+\usepackage{xcolor}
+\usepackage[left=1cm,right=1cm,top=2cm,bottom=2cm]{geometry}
+\usepackage{amsmath,amssymb}
+\setcounter{secnumdepth}{5}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\newsavebox\pandoc@box
+\newcommand*\pandocbounded[1]{% scales image to fit in text height/width
+  \sbox\pandoc@box{#1}%
+  \Gscale@div\@tempa{\textheight}{\dimexpr\ht\pandoc@box+\dp\pandoc@box\relax}%
+  \Gscale@div\@tempb{\linewidth}{\wd\pandoc@box}%
+  \ifdim\@tempb\p@<\@tempa\p@\let\@tempa\@tempb\fi% select the smaller of both
+  \ifdim\@tempa\p@<\p@\scalebox{\@tempa}{\usebox\pandoc@box}%
+  \else\usebox{\pandoc@box}%
+  \fi%
+}
+% Set default figure placement to htbp
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{pdflscape}
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Supplementary Materials for Log-F-penalized Conditional Logistic Regression for Sparse Data},
+  pdfauthor={Ying Yu, Jiying Wen, Jinko Graham, Brad McNeney},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Supplementary Materials for Log-F-penalized Conditional Logistic
+Regression for Sparse Data}
+\author{Ying Yu, Jiying Wen, Jinko Graham, Brad McNeney}
+\date{}
+
+\begin{document}
+\maketitle
+
+In these supplementary materials we give further details on the analyses
+of the DES and trio data and provide a table of the complete simulation
+results.
+
+\section{DES data analysis}\label{des-data-analysis}
+
+\subsection{Load packages and
+functions}\label{load-packages-and-functions}
+
+We use the following packages:
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{survival} for its \texttt{clogit()} function that performs
+  unpenalized conditional logistic regression (UCLR)
+\item
+  \texttt{coxphf} for its \texttt{coxphf()} function (Firth-penalized
+  Cox proportional hazards) that is called by \texttt{clogitf()} (see
+  below) do to Firth-penalized conditional logistic regression (FCLR),
+  and
+\item
+  \texttt{tidyverse}
+\end{itemize}
+
+We also load R source files that contain code for the analyses. These
+files are loaded from local copies, but are also available on GitHub at
+\url{https://github.com/SFUStatgen/logF_CLR}.
+
+\begin{itemize}
+\tightlist
+\item
+  \texttt{clogitf.R}: contains the functions \texttt{clogitf()} for
+  Firth-penalized conditional logistic regression, following a
+  suggestion by G. Heinze, and \texttt{clogitlogF()} for log-F-penalized
+  conditional logistic regression (logFU and logFW).
+\item
+  \texttt{logFmatched.R}: contains the function
+  \texttt{augment.logFmatched()} that augments an input data frame by
+  the pseudo-matched sets needed for log-F-penalized conditional
+  logistic regression.
+\end{itemize}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(survival)}
+\FunctionTok{library}\NormalTok{(coxphf)}
+\FunctionTok{library}\NormalTok{(tidyverse)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: package 'ggplot2' was built under R version 4.4.3
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package 'tidyr' was built under R version 4.4.3
+\end{verbatim}
+
+\begin{verbatim}
+## Warning: package 'dplyr' was built under R version 4.4.3
+\end{verbatim}
+
+\begin{verbatim}
+## -- Attaching core tidyverse packages ------------------------ tidyverse 2.0.0 --
+## v dplyr     1.2.0     v readr     2.1.5
+## v forcats   1.0.0     v stringr   1.5.1
+## v ggplot2   4.0.2     v tibble    3.2.1
+## v lubridate 1.9.3     v tidyr     1.3.2
+## v purrr     1.0.2     
+## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
+## x dplyr::filter() masks stats::filter()
+## x dplyr::lag()    masks stats::lag()
+## i Use the conflicted package (<http://conflicted.r-lib.org/>) to force all conflicts to become errors
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{source}\NormalTok{(}\StringTok{"../SimStudy/clogitf.R"}\NormalTok{) }\CommentTok{\# clogitf() for Firth and clogitlogF() for log{-}F}
+\FunctionTok{source}\NormalTok{(}\StringTok{"../SimStudy/logFmatched.R"}\NormalTok{) }\CommentTok{\# data augmentation function }
+\end{Highlighting}
+\end{Shaded}
+
+\subsection{DES data}\label{des-data}
+
+The DES data are available from the GitHub repository.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{des }\OtherTok{\textless{}{-}} \FunctionTok{read.csv}\NormalTok{(}\StringTok{"DES.csv"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{des}\SpecialCharTok{$}\NormalTok{matchedset }\OtherTok{\textless{}{-}}\NormalTok{ des}\SpecialCharTok{$}\NormalTok{matched.set }\CommentTok{\# Our code requires that var name is matchedset}
+\NormalTok{des }\OtherTok{\textless{}{-}} \FunctionTok{select}\NormalTok{(des,matchedset,case,DES,matern.smoke)}
+\FunctionTok{summary}\NormalTok{(des)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    matchedset        case          DES         matern.smoke
+##  Min.   :1.00   Min.   :0.0   Min.   :0.000   Min.   :0.0  
+##  1st Qu.:2.75   1st Qu.:0.0   1st Qu.:0.000   1st Qu.:0.0  
+##  Median :4.50   Median :0.0   Median :0.000   Median :1.0  
+##  Mean   :4.50   Mean   :0.2   Mean   :0.175   Mean   :0.7  
+##  3rd Qu.:6.25   3rd Qu.:0.0   3rd Qu.:0.000   3rd Qu.:1.0  
+##  Max.   :8.00   Max.   :1.0   Max.   :1.000   Max.   :1.0
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{xtabs}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{DES }\SpecialCharTok{+}\NormalTok{ case }\SpecialCharTok{+}\NormalTok{ matern.smoke,}\AttributeTok{data=}\NormalTok{des)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## , , matern.smoke = 0
+## 
+##    case
+## DES  0  1
+##   0 11  0
+##   1  0  1
+## 
+## , , matern.smoke = 1
+## 
+##    case
+## DES  0  1
+##   0 21  1
+##   1  0  6
+\end{verbatim}
+
+UCLR fails:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{form }\OtherTok{\textless{}{-}} \FunctionTok{formula}\NormalTok{(case }\SpecialCharTok{\textasciitilde{}}\NormalTok{ DES }\SpecialCharTok{+}\NormalTok{ matern.smoke)}
+\NormalTok{des.aug0 }\OtherTok{\textless{}{-}} \FunctionTok{augment.logFmatched}\NormalTok{(form,des,}\AttributeTok{m=}\DecValTok{0}\NormalTok{)}
+\NormalTok{UCLR }\OtherTok{\textless{}{-}} \FunctionTok{try}\NormalTok{(}\FunctionTok{clogitlogF}\NormalTok{(form,des.aug0,}\AttributeTok{maxit=}\DecValTok{500}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
+## Loglik converged before variable 1,2 ; coefficient may be infinite.
+\end{verbatim}
+
+\begin{verbatim}
+## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
+## Loglik converged before variable 1 ; coefficient may be infinite.
+## Warning in coxph.fit(X, Y, istrat, offset, init, control, weights = weights, :
+## Loglik converged before variable 1 ; coefficient may be infinite.
+\end{verbatim}
+
+FCLR works but throws a warning unless you run it for many iterations.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{FCLR }\OtherTok{\textless{}{-}} \FunctionTok{clogitf}\NormalTok{(form,des,}\AttributeTok{maxit=}\DecValTok{500}\NormalTok{)}
+\NormalTok{FCLR}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## coxphf(formula = newformula, data = data, pl = pl, alpha = alpha, 
+##     maxit = maxit, maxstep = 0.1, firth = firth, penalty = penalty)
+## Model fitted by Penalized ML
+## Confidence intervals and p-values by Profile Likelihood 
+## 
+##                   coef se(coef) exp(coef) lower 0.95 upper 0.95       Chisq
+## DES          3.5693754 1.290983 35.494415 5.58179127  4150.4713 18.17084945
+## matern.smoke 0.3457531 1.636754  1.413054 0.05167926   390.8237  0.03138198
+##                         p
+## DES          2.019463e-05
+## matern.smoke 8.593909e-01
+## 
+## Likelihood ratio test=19.25106 on 2 df, p=6.602162e-05, n=40
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(FCLR)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        [,1]     [,2]
+## DES 1.71951 8.330977
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{exp}\NormalTok{(}\FunctionTok{confint}\NormalTok{(FCLR))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         [,1]     [,2]
+## DES 5.581791 4150.471
+\end{verbatim}
+
+The uninformative prior for DES and maternal smoking is log-F(1,1).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{des.augU }\OtherTok{\textless{}{-}} \FunctionTok{augment.logFmatched}\NormalTok{(form,des,}\AttributeTok{m=}\DecValTok{1}\NormalTok{)}
+\NormalTok{logFU }\OtherTok{\textless{}{-}} \FunctionTok{clogitlogF}\NormalTok{(form,des.augU)}
+\NormalTok{logFU}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+## clogit(formula, dat, weights = dat$weights, method = "efron", 
+##     iter.max = maxit)
+## 
+##                 coef exp(coef) se(coef) robust se     z        p
+## DES           3.9295   50.8792   1.4674    1.0539 3.728 0.000193
+## matern.smoke  0.5439    1.7228   1.3870    0.6068 0.896 0.370069
+## 
+## Likelihood ratio test=19.05  on 2 df, p=7.286e-05
+## n= 48, number of events= 12
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(logFU)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    lower    upper 
+## 1.798544 8.800101
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{exp}\NormalTok{(}\FunctionTok{confint}\NormalTok{(logFU))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##       lower       upper 
+##    6.040847 6634.917329
+\end{verbatim}
+
+The uninformative prior for DES and maternal smoking is log-F(2,2).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{des.augW }\OtherTok{\textless{}{-}} \FunctionTok{augment.logFmatched}\NormalTok{(form,des,}\AttributeTok{m=}\DecValTok{2}\NormalTok{)}
+\NormalTok{logFW }\OtherTok{\textless{}{-}} \FunctionTok{clogitlogF}\NormalTok{(form,des.augW)}
+\NormalTok{logFW}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+## clogit(formula, dat, weights = dat$weights, method = "efron", 
+##     iter.max = maxit)
+## 
+##                 coef exp(coef) se(coef)     z       p
+## DES           3.2110   24.8041   1.0736 2.991 0.00278
+## matern.smoke  0.4134    1.5119   1.0395 0.398 0.69091
+## 
+## Likelihood ratio test=16.8  on 2 df, p=0.0002252
+## n= 48, number of events= 12
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(logFW)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    lower    upper 
+## 1.475414 6.144158
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{exp}\NormalTok{(}\FunctionTok{confint}\NormalTok{(logFW))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      lower      upper 
+##   4.372844 465.987077
+\end{verbatim}
+
+We also plot the profile penalized log likelihoods. For the log-F
+approaches we do this by fixing the DES effect and maximizing over the
+maternal smoking effect, with the DES effect included as an offset. For
+FCLR we use the output of the \texttt{coxphfplot()} function.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ profile\_ll\_logF }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(beta\_t,augdata) \{}
+\NormalTok{    offset }\OtherTok{\textless{}{-}}\NormalTok{ beta\_t }\SpecialCharTok{*}\NormalTok{ augdata}\SpecialCharTok{$}\NormalTok{DES}
+\NormalTok{    form }\OtherTok{\textless{}{-}} \FunctionTok{formula}\NormalTok{(case }\SpecialCharTok{\textasciitilde{}}\NormalTok{ matern.smoke }\SpecialCharTok{+} \FunctionTok{strata}\NormalTok{(matchedset) }\SpecialCharTok{+} \FunctionTok{offset}\NormalTok{(offset))}
+\NormalTok{    fit\_t }\OtherTok{\textless{}{-}}\NormalTok{ survival}\SpecialCharTok{::}\FunctionTok{clogit}\NormalTok{(form, }\AttributeTok{data =}\NormalTok{ augdata, }\AttributeTok{weights =}\NormalTok{ augdata}\SpecialCharTok{$}\NormalTok{weights,}
+                              \AttributeTok{method =} \StringTok{"efron"}\NormalTok{)}
+\NormalTok{    fit\_t}\SpecialCharTok{$}\NormalTok{loglik[}\DecValTok{2}\NormalTok{]}
+\NormalTok{ \}}
+\NormalTok{profile\_ll\_FCLR }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(formula,data) \{ }\CommentTok{\# Suggestion from Heinze}
+  \FunctionTok{require}\NormalTok{(coxphf)}
+\NormalTok{  data}\SpecialCharTok{$}\NormalTok{start }\OtherTok{=}\NormalTok{ data}\SpecialCharTok{$}\NormalTok{matchedset}
+\NormalTok{  data}\SpecialCharTok{$}\NormalTok{stop }\OtherTok{=}\NormalTok{ data}\SpecialCharTok{$}\NormalTok{matchedset}\FloatTok{+0.1}
+  \CommentTok{\# Change response as done in clogit()}
+\NormalTok{  newformula }\OtherTok{=}\NormalTok{ formula}
+\NormalTok{  newformula[[}\DecValTok{2}\NormalTok{]]}\OtherTok{=}\FunctionTok{substitute}\NormalTok{(}\FunctionTok{Surv}\NormalTok{(start,stop,case),}\FunctionTok{list}\NormalTok{(}\AttributeTok{case=}\NormalTok{formula[[}\DecValTok{2}\NormalTok{]]))}
+  \FunctionTok{environment}\NormalTok{(newformula) }\OtherTok{=} \FunctionTok{environment}\NormalTok{(formula) }
+\NormalTok{  p }\OtherTok{\textless{}{-}} \FunctionTok{coxphfplot}\NormalTok{(}\AttributeTok{formula=}\NormalTok{newformula,}\AttributeTok{data=}\NormalTok{data,}\AttributeTok{profile=}\SpecialCharTok{\textasciitilde{}}\NormalTok{DES)}
+  \FunctionTok{return}\NormalTok{(p)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Now run these functions to obtain the profile penalized log likelihoods
+for all the methods.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fclr }\OtherTok{\textless{}{-}} \FunctionTok{profile\_ll\_FCLR}\NormalTok{(form,des)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{suppMat_files/figure-latex/unnamed-chunk-14-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{beta\_t }\OtherTok{\textless{}{-}}\NormalTok{ fclr[,}\StringTok{"DES"}\NormalTok{]}
+\NormalTok{fclr }\OtherTok{\textless{}{-}}\NormalTok{ fclr[,}\StringTok{"log{-}likelihood"}\NormalTok{]}
+\NormalTok{uclr }\OtherTok{\textless{}{-}}\NormalTok{ logfu }\OtherTok{\textless{}{-}}\NormalTok{ logfw }\OtherTok{\textless{}{-}} \FunctionTok{rep}\NormalTok{(}\ConstantTok{NA}\NormalTok{,}\FunctionTok{length}\NormalTok{(beta\_t))}
+\ControlFlowTok{for}\NormalTok{(i }\ControlFlowTok{in} \FunctionTok{seq\_along}\NormalTok{(beta\_t)) \{}
+\NormalTok{  uclr[i] }\OtherTok{\textless{}{-}} \FunctionTok{profile\_ll\_logF}\NormalTok{(beta\_t[i],des.aug0)}
+\NormalTok{  logfu[i] }\OtherTok{\textless{}{-}} \FunctionTok{profile\_ll\_logF}\NormalTok{(beta\_t[i],des.augU)}
+\NormalTok{  logfw[i] }\OtherTok{\textless{}{-}} \FunctionTok{profile\_ll\_logF}\NormalTok{(beta\_t[i],des.augW)}
+\NormalTok{\}}
+\NormalTok{mm }\OtherTok{\textless{}{-}} \FunctionTok{factor}\NormalTok{(}\FunctionTok{rep}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\StringTok{"UCLR"}\NormalTok{,}\StringTok{"FCLR"}\NormalTok{,}\StringTok{"logFU"}\NormalTok{,}\StringTok{"logFW"}\NormalTok{),}\AttributeTok{each=}\FunctionTok{length}\NormalTok{(beta\_t)),}
+             \AttributeTok{levels=}\FunctionTok{c}\NormalTok{(}\StringTok{"UCLR"}\NormalTok{,}\StringTok{"FCLR"}\NormalTok{,}\StringTok{"logFU"}\NormalTok{,}\StringTok{"logFW"}\NormalTok{))}
+\NormalTok{plotdat }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}\AttributeTok{logGRR=}\FunctionTok{rep}\NormalTok{(beta\_t,}\DecValTok{4}\NormalTok{),}\AttributeTok{profll=}\FunctionTok{c}\NormalTok{(uclr,fclr,logfu,logfw),}
+                      \AttributeTok{method=}\NormalTok{mm)}
+\end{Highlighting}
+\end{Shaded}
+
+Finally, we can plot the curves.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggplot}\NormalTok{(plotdat,}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{logGRR,}\AttributeTok{y=}\NormalTok{profll,}\AttributeTok{color=}\NormalTok{method)) }\SpecialCharTok{+} \FunctionTok{geom\_line}\NormalTok{() }\SpecialCharTok{+}
+   \FunctionTok{scale\_color\_manual}\NormalTok{(}\AttributeTok{values=}\FunctionTok{c}\NormalTok{(}\StringTok{"black"}\NormalTok{,}\StringTok{"\#00AFBB"}\NormalTok{,}\StringTok{"\#52854C"}\NormalTok{,}\StringTok{"\#E7B800"}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{xlab}\NormalTok{(}\FunctionTok{expression}\NormalTok{(}\FunctionTok{paste}\NormalTok{(}\StringTok{"log{-}OR "}\NormalTok{,beta))) }\SpecialCharTok{+} 
+  \FunctionTok{ylab}\NormalTok{(}\StringTok{"Profile penalized log{-}likelihood"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_vline}\NormalTok{(}\AttributeTok{xintercept=}\NormalTok{beta\_t[}\FunctionTok{which.max}\NormalTok{(fclr)],}
+             \AttributeTok{linetype=}\StringTok{"longdash"}\NormalTok{, }\AttributeTok{color=}\StringTok{"\#00AFBB"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_vline}\NormalTok{(}\AttributeTok{xintercept=}\NormalTok{beta\_t[}\FunctionTok{which.max}\NormalTok{(logfu)],}
+             \AttributeTok{linetype=}\StringTok{"longdash"}\NormalTok{, }\AttributeTok{color=}\StringTok{"\#52854C"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_vline}\NormalTok{(}\AttributeTok{xintercept=}\NormalTok{beta\_t[}\FunctionTok{which.max}\NormalTok{(logfw)],}
+             \AttributeTok{linetype=}\StringTok{"longdash"}\NormalTok{, }\AttributeTok{color=}\StringTok{"\#E7B800"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\pandocbounded{\includegraphics[keepaspectratio]{suppMat_files/figure-latex/unnamed-chunk-15-1.pdf}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(}\AttributeTok{file=}\StringTok{"DESprofile.eps"}\NormalTok{,}\AttributeTok{device=}\StringTok{"eps"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Saving 6.5 x 4.5 in image
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggsave}\NormalTok{(}\AttributeTok{file=}\StringTok{"DESprofile.pdf"}\NormalTok{,}\AttributeTok{device=}\StringTok{"pdf"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Saving 6.5 x 4.5 in image
+\end{verbatim}
+
+\subsection{Session information for DES
+analysis}\label{session-information-for-des-analysis}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sessionInfo}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## R version 4.4.1 (2024-06-14)
+## Platform: aarch64-apple-darwin20
+## Running under: macOS Sonoma 14.7.8
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## time zone: America/Vancouver
+## tzcode source: internal
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] lubridate_1.9.3 forcats_1.0.0   stringr_1.5.1   dplyr_1.2.0    
+##  [5] purrr_1.0.2     readr_2.1.5     tidyr_1.3.2     tibble_3.2.1   
+##  [9] ggplot2_4.0.2   tidyverse_2.0.0 coxphf_1.13.4   survival_3.6-4 
+## 
+## loaded via a namespace (and not attached):
+##  [1] Matrix_1.7-0       gtable_0.3.6       compiler_4.4.1     tinytex_0.51      
+##  [5] tidyselect_1.2.1   textshaping_0.4.0  systemfonts_1.3.2  splines_4.4.1     
+##  [9] scales_1.4.0       yaml_2.3.8         fastmap_1.2.0      lattice_0.22-6    
+## [13] R6_2.5.1           labeling_0.4.3     generics_0.1.3     knitr_1.50        
+## [17] pillar_1.11.1      RColorBrewer_1.1-3 tzdb_0.5.0         rlang_1.1.7       
+## [21] stringi_1.8.4      xfun_0.52          S7_0.2.1           timechange_0.3.0  
+## [25] cli_3.6.4          withr_3.0.0        magrittr_2.0.3     digest_0.6.37     
+## [29] grid_4.4.1         rstudioapi_0.16.0  hms_1.1.3          lifecycle_1.0.5   
+## [33] vctrs_0.7.2        evaluate_1.0.1     glue_1.8.0         farver_2.1.2      
+## [37] ragg_1.3.2         rmarkdown_2.27     tools_4.4.1        pkgconfig_2.0.3   
+## [41] htmltools_0.5.8.1
+\end{verbatim}
+
+\clearpage
+
+\section{Trio data analysis}\label{trio-data-analysis}
+
+\subsection{Purpose}\label{purpose}
+
+This document reconstructs the case-parent trio analysis used in the
+manuscript. It explains the conditional-likelihood formulation, shows
+how Mendelian transmission probabilities enter as offsets in conditional
+logistic regression, and fits an additive per-allele model for the Z+2
+allele at the \textit{GCK1} microsatellite locus.
+
+The reconstructed data are based on the counts reported by Frayling et
+al.~(1999). The affected child is treated as the case, and the genotypes
+that could have been transmitted by the same parents are treated as
+matched pseudo-controls. Parental mating type defines the matched set.
+
+\subsection{Data and notation}\label{data-and-notation}
+
+Let
+
+\begin{itemize}
+\tightlist
+\item
+  \(G\in\{0,1,2\}\) denote the number of copies of the Z+2 allele
+  carried by the child;
+\item
+  \(G_p=(g_{p1},g_{p2})\) denote the parental Z+2 allele counts;
+\item
+  \(D=1\) identify the observed affected child and \(D=0\) identify a
+  pseudo-control genotype.
+\end{itemize}
+
+The original draft described the genetic variants as SNPs. That is not
+correct for this application: \textit{GCK1} is a microsatellite locus,
+and Z+2 is one of its alleles.
+
+The reported affected-child counts are:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{affected\_counts }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(}
+  \AttributeTok{mating =} \FunctionTok{c}\NormalTok{(}\StringTok{"0x1"}\NormalTok{, }\StringTok{"0x1"}\NormalTok{, }\StringTok{"1x1"}\NormalTok{, }\StringTok{"1x1"}\NormalTok{),}
+  \AttributeTok{observed\_g =} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{),}
+  \AttributeTok{n =} \FunctionTok{c}\NormalTok{(}\DecValTok{10}\NormalTok{, }\DecValTok{15}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{)}
+\NormalTok{)}
+
+\NormalTok{affected\_counts}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   mating observed_g  n
+## 1    0x1          0 10
+## 2    0x1          1 15
+## 3    1x1          0  1
+## 4    1x1          1  1
+\end{verbatim}
+
+\subsection{Conditional likelihood for trio
+data}\label{conditional-likelihood-for-trio-data}
+
+Conditional on parental mating type \(G_p\), the probability that the
+affected child has genotype \(g\) is proportional to
+
+\[
+\exp\{z(g)^T\beta\}P(G=g\mid G_p),
+\]
+
+where \(P(G=g\mid G_p)\) is the Mendelian transmission probability. Thus
+the likelihood contribution of one trio is
+
+\[
+\frac{
+  \exp\{z(g)^T\beta\}P(G=g\mid G_p)
+}{
+  \sum_{g^\ast}
+  \exp\{z(g^\ast)^T\beta\}P(G=g^\ast\mid G_p)
+}.
+\]
+
+This has the form of a conditional logistic likelihood with linear
+predictor
+
+\[
+z(g)^T\beta+\log P(G=g\mid G_p).
+\]
+
+Therefore, the logarithm of the Mendelian transmission probability
+enters the conditional logistic regression as an offset.
+
+Because an additive constant within a matched set cancels from the
+conditional likelihood, one may use either the exact log probabilities
+or any proportional weights. For a \(1\times1\) mating, for example,
+
+\[
+P(G=0\mid G_p)=\frac14,\qquad
+P(G=1\mid G_p)=\frac12,\qquad
+P(G=2\mid G_p)=\frac14.
+\]
+
+The exact offsets are \(\{\log(1/4),\log(1/2),\log(1/4)\}\). Subtracting
+the common value \(\log(1/4)\) gives the equivalent offsets
+
+\[
+\{0,\log 2,0\}.
+\]
+
+\subsubsection{Additive per-allele
+model}\label{additive-per-allele-model}
+
+The manuscript reports a single genotype relative risk for each
+additional copy of the Z+2 allele. The corresponding model is
+
+\[
+z(g)=g
+\]
+
+and
+
+\[
+\operatorname{GRR}=\exp(\beta).
+\]
+
+This is different from a two-parameter model with separate genotype
+effects. If one writes
+
+\[
+z(g)=
+\begin{cases}
+(0,0), & g=0,\\
+(1,0), & g=1,\\
+(1,1), & g=2,
+\end{cases}
+\]
+
+then the parameters are log relative-risk increments:
+
+\[
+\exp(\beta_1)
+=
+\frac{P(D=1\mid G=1)}{P(D=1\mid G=0)},
+\qquad
+\exp(\beta_2)
+=
+\frac{P(D=1\mid G=2)}{P(D=1\mid G=1)}.
+\]
+
+The \(\beta_j\) themselves are log-GRRs, not GRRs. In these
+reconstructed data, no affected child has genotype \(G=2\), so the
+two-parameter model has no information about \(\beta_2\). The
+single-parameter additive model is therefore the model used below.
+
+\subsection{Reconstructing the matched pseudo-control
+data}\label{reconstructing-the-matched-pseudo-control-data}
+
+For a \(0\times1\) mating, the possible offspring genotypes are 0 and 1,
+each with probability \(1/2\).
+
+For a \(1\times1\) mating, the possible offspring genotypes are 0, 1,
+and 2, with probabilities \(1/4\), \(1/2\), and \(1/4\), respectively.
+
+Each observed affected child defines one matched set. The observed
+genotype is coded as the case, and the other possible offspring
+genotypes are coded as pseudo-controls.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{make\_set }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(stratum, mating, observed\_g) \{}
+  \ControlFlowTok{if}\NormalTok{ (mating }\SpecialCharTok{==} \StringTok{"0x1"}\NormalTok{) \{}
+    \CommentTok{\# Mendelian probabilities: P(G=0)=1/2, P(G=1)=1/2}
+\NormalTok{    g }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{)}
+
+\NormalTok{  \} }\ControlFlowTok{else} \ControlFlowTok{if}\NormalTok{ (mating }\SpecialCharTok{==} \StringTok{"1x1"}\NormalTok{) \{}
+    \CommentTok{\# Mendelian probabilities: P(G=0)=1/4, P(G=1)=1/2, P(G=2)=1/4}
+    \CommentTok{\# Represent these probabilities by multiplicities 1:2:1.}
+\NormalTok{    g }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{)}
+
+\NormalTok{  \} }\ControlFlowTok{else}\NormalTok{ \{}
+    \FunctionTok{stop}\NormalTok{(}\StringTok{"Unsupported mating type: "}\NormalTok{, mating)}
+\NormalTok{  \}}
+
+\NormalTok{  case }\OtherTok{\textless{}{-}} \FunctionTok{integer}\NormalTok{(}\FunctionTok{length}\NormalTok{(g))}
+
+  \CommentTok{\# Mark exactly one copy of the observed genotype as the affected child.}
+\NormalTok{  observed\_rows }\OtherTok{\textless{}{-}} \FunctionTok{which}\NormalTok{(g }\SpecialCharTok{==}\NormalTok{ observed\_g)}
+
+  \ControlFlowTok{if}\NormalTok{ (}\FunctionTok{length}\NormalTok{(observed\_rows) }\SpecialCharTok{==} \DecValTok{0}\DataTypeTok{L}\NormalTok{) \{}
+    \FunctionTok{stop}\NormalTok{(}
+      \StringTok{"Observed genotype "}\NormalTok{, observed\_g,}
+      \StringTok{" is incompatible with mating type "}\NormalTok{, mating, }\StringTok{"."}
+\NormalTok{    )}
+\NormalTok{  \}}
+
+\NormalTok{  case[observed\_rows[}\DecValTok{1}\DataTypeTok{L}\NormalTok{]] }\OtherTok{\textless{}{-}} \DecValTok{1}\DataTypeTok{L}
+
+  \FunctionTok{data.frame}\NormalTok{(}
+    \AttributeTok{stratum =}\NormalTok{ stratum,}
+    \AttributeTok{mating =}\NormalTok{ mating,}
+    \AttributeTok{g =}\NormalTok{ g,}
+    \AttributeTok{case =}\NormalTok{ case}
+\NormalTok{  )}
+\NormalTok{\}}
+
+\NormalTok{sets }\OtherTok{\textless{}{-}} \FunctionTok{vector}\NormalTok{(}\StringTok{"list"}\NormalTok{, }\FunctionTok{sum}\NormalTok{(affected\_counts}\SpecialCharTok{$}\NormalTok{n))}
+\NormalTok{s }\OtherTok{\textless{}{-}} \DecValTok{1}\DataTypeTok{L}
+
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \FunctionTok{seq\_len}\NormalTok{(}\FunctionTok{nrow}\NormalTok{(affected\_counts))) \{}
+  \ControlFlowTok{for}\NormalTok{ (j }\ControlFlowTok{in} \FunctionTok{seq\_len}\NormalTok{(affected\_counts}\SpecialCharTok{$}\NormalTok{n[i])) \{}
+\NormalTok{    sets[[s]] }\OtherTok{\textless{}{-}} \FunctionTok{make\_set}\NormalTok{(}
+      \AttributeTok{stratum =}\NormalTok{ s,}
+      \AttributeTok{mating =}\NormalTok{ affected\_counts}\SpecialCharTok{$}\NormalTok{mating[i],}
+      \AttributeTok{observed\_g =}\NormalTok{ affected\_counts}\SpecialCharTok{$}\NormalTok{observed\_g[i]}
+\NormalTok{    )}
+\NormalTok{    s }\OtherTok{\textless{}{-}}\NormalTok{ s }\SpecialCharTok{+} \DecValTok{1}\DataTypeTok{L}
+\NormalTok{  \}}
+\NormalTok{\}}
+
+\NormalTok{trio\_dat }\OtherTok{\textless{}{-}} \FunctionTok{do.call}\NormalTok{(rbind, sets)}
+\FunctionTok{row.names}\NormalTok{(trio\_dat) }\OtherTok{\textless{}{-}} \ConstantTok{NULL}
+
+\FunctionTok{head}\NormalTok{(trio\_dat, }\DecValTok{12}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    stratum mating g case
+## 1        1    0x1 0    1
+## 2        1    0x1 1    0
+## 3        2    0x1 0    1
+## 4        2    0x1 1    0
+## 5        3    0x1 0    1
+## 6        3    0x1 1    0
+## 7        4    0x1 0    1
+## 8        4    0x1 1    0
+## 9        5    0x1 0    1
+## 10       5    0x1 1    0
+## 11       6    0x1 0    1
+## 12       6    0x1 1    0
+\end{verbatim}
+
+Basic checks:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{stopifnot}\NormalTok{(}\FunctionTok{all}\NormalTok{(}\FunctionTok{tapply}\NormalTok{(trio\_dat}\SpecialCharTok{$}\NormalTok{case, trio\_dat}\SpecialCharTok{$}\NormalTok{stratum, sum) }\SpecialCharTok{==} \DecValTok{1}\NormalTok{))}
+\FunctionTok{stopifnot}\NormalTok{(}\FunctionTok{nlevels}\NormalTok{(}\FunctionTok{factor}\NormalTok{(trio\_dat}\SpecialCharTok{$}\NormalTok{stratum)) }\SpecialCharTok{==} \DecValTok{27}\NormalTok{)}
+\FunctionTok{stopifnot}\NormalTok{(}\FunctionTok{nrow}\NormalTok{(trio\_dat) }\SpecialCharTok{==} \DecValTok{58}\NormalTok{)}
+
+\FunctionTok{with}\NormalTok{(trio\_dat, }\FunctionTok{table}\NormalTok{(mating, g, case))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## , , case = 0
+## 
+##       g
+## mating  0  1  2
+##    0x1 15 10  0
+##    1x1  1  3  2
+## 
+## , , case = 1
+## 
+##       g
+## mating  0  1  2
+##    0x1 10 15  0
+##    1x1  1  1  0
+\end{verbatim}
+
+\subsection{Fitting the additive conditional logistic
+regression}\label{fitting-the-additive-conditional-logistic-regression}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(survival)}
+
+\NormalTok{fit }\OtherTok{\textless{}{-}} \FunctionTok{clogit}\NormalTok{(}
+\NormalTok{  case }\SpecialCharTok{\textasciitilde{}}\NormalTok{ g }\SpecialCharTok{+} \FunctionTok{strata}\NormalTok{(stratum),}
+  \AttributeTok{data =}\NormalTok{ trio\_dat,}
+  \AttributeTok{method =} \StringTok{"exact"}
+\NormalTok{)}
+
+\FunctionTok{summary}\NormalTok{(fit)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+## coxph(formula = Surv(rep(1, 58L), case) ~ g + strata(stratum), 
+##     data = trio_dat, method = "exact")
+## 
+##   n= 58, number of events= 27 
+## 
+##     coef exp(coef) se(coef)     z Pr(>|z|)
+## g 0.2076    1.2308   0.3734 0.556    0.578
+## 
+##   exp(coef) exp(-coef) lower .95 upper .95
+## g     1.231     0.8125     0.592     2.559
+## 
+## Concordance= 0.532  (se = 0.13 )
+## Likelihood ratio test= 0.31  on 1 df,   p=0.6
+## Wald test            = 0.31  on 1 df,   p=0.6
+## Score (logrank) test = 0.31  on 1 df,   p=0.6
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{trio\_dat}\SpecialCharTok{$}\NormalTok{matchedset }\OtherTok{\textless{}{-}}\NormalTok{ trio\_dat}\SpecialCharTok{$}\NormalTok{stratum}
+\NormalTok{form }\OtherTok{\textless{}{-}} \FunctionTok{formula}\NormalTok{(case }\SpecialCharTok{\textasciitilde{}}\NormalTok{ g)}
+\CommentTok{\#trio.aug0 \textless{}{-} augment.logFmatched(form,trio\_dat,m=0) \# doesn\textquotesingle{}t work. Not set up for m=0}
+\NormalTok{trio.aug0 }\OtherTok{\textless{}{-}}\NormalTok{ trio\_dat; trio.aug0}\SpecialCharTok{$}\NormalTok{weights }\OtherTok{\textless{}{-}} \DecValTok{1} \CommentTok{\# add weights manually}
+\NormalTok{UCLR }\OtherTok{\textless{}{-}} \FunctionTok{clogitlogF}\NormalTok{(form,trio.aug0,}\AttributeTok{maxit=}\DecValTok{500}\NormalTok{)}
+\NormalTok{UCLR}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+## clogit(formula, dat, weights = dat$weights, method = "efron", 
+##     iter.max = maxit)
+## 
+##     coef exp(coef) se(coef)     z     p
+## g 0.2076    1.2308   0.3734 0.556 0.578
+## 
+## Likelihood ratio test=0.31  on 1 df, p=0.5771
+## n= 58, number of events= 27
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{exp}\NormalTok{(}\FunctionTok{c}\NormalTok{(UCLR}\SpecialCharTok{$}\NormalTok{ci.lower,UCLR}\SpecialCharTok{$}\NormalTok{ci.upper))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##     lower     upper 
+## 0.5927131 2.6040805
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{FCLR }\OtherTok{\textless{}{-}} \FunctionTok{clogitf}\NormalTok{(form,trio\_dat,}\AttributeTok{maxit=}\DecValTok{500}\NormalTok{)}
+\NormalTok{FCLR}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## coxphf(formula = newformula, data = data, pl = pl, alpha = alpha, 
+##     maxit = maxit, maxstep = 0.1, firth = firth, penalty = penalty)
+## Model fitted by Penalized ML
+## Confidence intervals and p-values by Profile Likelihood 
+## 
+##        coef  se(coef) exp(coef) lower 0.95 upper 0.95    Chisq         p
+## g 0.2006707 0.3732617  1.222222  0.5959001   2.551013 0.300502 0.5835679
+## 
+## Likelihood ratio test=0.300502 on 1 df, p=0.5835679, n=58
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(FCLR)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##         [,1]      [,2]
+## g -0.5176822 0.9364906
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{exp}\NormalTok{(}\FunctionTok{confint}\NormalTok{(FCLR))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        [,1]     [,2]
+## g 0.5959001 2.551013
+\end{verbatim}
+
+The uninformative prior for the binary genotype effect is log-F(1,1).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{trio.augU }\OtherTok{\textless{}{-}} \FunctionTok{augment.logFmatched}\NormalTok{(form,trio\_dat,}\AttributeTok{m=}\DecValTok{1}\NormalTok{)}
+\NormalTok{logFU }\OtherTok{\textless{}{-}} \FunctionTok{clogitlogF}\NormalTok{(form,trio.augU)}
+\NormalTok{logFU}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+## clogit(formula, dat, weights = dat$weights, method = "efron", 
+##     iter.max = maxit)
+## 
+##     coef exp(coef) se(coef) robust se     z     p
+## g 0.2007    1.2222   0.3670    0.2727 0.736 0.462
+## 
+## Likelihood ratio test=0.3  on 1 df, p=0.5836
+## n= 62, number of events= 29
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(logFU)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      lower      upper 
+## -0.5176824  0.9364907
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{exp}\NormalTok{(}\FunctionTok{confint}\NormalTok{(logFU))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##    lower    upper 
+## 0.595900 2.551013
+\end{verbatim}
+
+The weakly informative prior is log-F(2,2).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{trio.augW }\OtherTok{\textless{}{-}} \FunctionTok{augment.logFmatched}\NormalTok{(form,trio\_dat,}\AttributeTok{m=}\DecValTok{2}\NormalTok{)}
+\NormalTok{logFW }\OtherTok{\textless{}{-}} \FunctionTok{clogitlogF}\NormalTok{(form,trio.augW)}
+\NormalTok{logFW}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Call:
+## clogit(formula, dat, weights = dat$weights, method = "efron", 
+##     iter.max = maxit)
+## 
+##     coef exp(coef) se(coef)     z     p
+## g 0.1942    1.2143   0.3609 0.538 0.591
+## 
+## Likelihood ratio test=0.29  on 1 df, p=0.5897
+## n= 62, number of events= 29
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{confint}\NormalTok{(logFW)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      lower      upper 
+## -0.5124318  0.9171290
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{exp}\NormalTok{(}\FunctionTok{confint}\NormalTok{(logFW))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##     lower     upper 
+## 0.5990371 2.5020965
+\end{verbatim}
+
+\subsection{Session information for the trio data
+analysis}\label{session-information-for-the-trio-data-analysis}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sessionInfo}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## R version 4.4.1 (2024-06-14)
+## Platform: aarch64-apple-darwin20
+## Running under: macOS Sonoma 14.7.8
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## time zone: America/Vancouver
+## tzcode source: internal
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] lubridate_1.9.3 forcats_1.0.0   stringr_1.5.1   dplyr_1.2.0    
+##  [5] purrr_1.0.2     readr_2.1.5     tidyr_1.3.2     tibble_3.2.1   
+##  [9] ggplot2_4.0.2   tidyverse_2.0.0 coxphf_1.13.4   survival_3.6-4 
+## 
+## loaded via a namespace (and not attached):
+##  [1] Matrix_1.7-0       gtable_0.3.6       compiler_4.4.1     tinytex_0.51      
+##  [5] tidyselect_1.2.1   textshaping_0.4.0  systemfonts_1.3.2  splines_4.4.1     
+##  [9] scales_1.4.0       yaml_2.3.8         fastmap_1.2.0      lattice_0.22-6    
+## [13] R6_2.5.1           labeling_0.4.3     generics_0.1.3     knitr_1.50        
+## [17] pillar_1.11.1      RColorBrewer_1.1-3 tzdb_0.5.0         rlang_1.1.7       
+## [21] stringi_1.8.4      xfun_0.52          S7_0.2.1           timechange_0.3.0  
+## [25] cli_3.6.4          withr_3.0.0        magrittr_2.0.3     digest_0.6.37     
+## [29] grid_4.4.1         rstudioapi_0.16.0  hms_1.1.3          lifecycle_1.0.5   
+## [33] vctrs_0.7.2        evaluate_1.0.1     glue_1.8.0         farver_2.1.2      
+## [37] ragg_1.3.2         rmarkdown_2.27     tools_4.4.1        pkgconfig_2.0.3   
+## [41] htmltools_0.5.8.1
+\end{verbatim}
+
+\clearpage
+
+\section{Complete simulation results}\label{complete-simulation-results}
+
+The full simulation results table is available on GitHub.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{results }\OtherTok{\textless{}{-}} \FunctionTok{read.table}\NormalTok{(}\StringTok{"https://raw.githubusercontent.com/SFUStatgen/logF\_CLR/refs/heads/main/simres.txt"}\NormalTok{,}
+                      \AttributeTok{header=}\ConstantTok{TRUE}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\input{../SimStudy/simresComplete.tex}
+
+\end{document}

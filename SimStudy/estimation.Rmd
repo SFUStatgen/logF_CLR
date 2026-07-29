@@ -1,0 +1,227 @@
+---
+title: "Estimation: bias, MSE and coverage"
+output: pdf_document
+date: "2024-05-25"
+---
+
+```{r setup, include=FALSE, message=FALSE,warning=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load required packages
+
+```{r}
+library(tidyverse)
+```
+
+## Read results 
+
+```{r}
+res <- read.table("simres.txt",header=TRUE)
+res$method[res$method=="Firth"] <- "FCLR"
+res$method[res$method=="CLR"] <- "UCLR"
+# make sure simultion config parameters are all factors
+for(col in c("method","ConCaseRatio","nmatch","exptype","beta","ncov")) {
+  res[,col] <- factor(res[,col])
+}
+
+```
+
+```{r}
+fres <-  res
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=bias,color=beta,linetype=ConCaseRatio,shape=method)) + geom_point() + geom_line() +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(nmatch~exptype,scale="free") + 
+  xlab("number of nuisance covariates")+ ylab("estimated non-convergence rate") +
+  labs(color="exposure effect") +
+  labs(linetype="num. controls") +
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+```
+
+Bias of CLR is well-known dwarfs the others, so eliminate and replot
+
+```{r}
+fres <- filter(res,method!="UCLR")
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=bias,color=beta,linetype=ConCaseRatio,shape=method)) + geom_point() + geom_line() +
+  facet_grid(nmatch~exptype) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL)) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(nmatch~exptype,scale="free") + 
+  #scale_y_continuous(n.breaks = 4) +
+  xlab("number of nuisance covariates")+ ylab("estimated non-convergence rate") +
+  labs(color="exposure effect") +
+  labs(linetype="num. controls")
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+```
+
+Bias is closer to zero for 1:4 matching. Remove these to focus on bias under 1:1 matching
+```{r}
+fres <- filter(res,method!="UCLR",ConCaseRatio==1)
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=bias,color=beta,shape=method)) + geom_point() + geom_line() +
+  facet_grid(nmatch~exptype) +
+   geom_hline(yintercept=0, color = "grey",linewidth=2,alpha=.5) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL),n.breaks=4) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(nmatch~exptype,scale="free") + 
+  xlab("number of nuisance covariates")+ ylab("estimated bias") +
+  labs(color="exposure effect") +
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+```
+
+Bias is near 0 when the effect size is 0, so remove and replot. Also, 
+results for 10 matched sets are all over the place, so exclude those too
+
+```{r}
+fres <- filter(res,method!="UCLR",ConCaseRatio==1,beta!=0,nmatch!=10)
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=bias,color=beta,shape=method)) + geom_point() + geom_line() +
+  facet_grid(nmatch~exptype) +
+   geom_hline(yintercept=0, color = "grey",linewidth=2,alpha=.5) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL),n.breaks=4) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(nmatch~exptype,scale="free") + 
+  xlab("number of nuisance covariates")+ ylab("estimated bias") +
+  labs(color="exposure effect") +
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="bias.eps",device="eps")
+ggsave(file="bias.pdf",device="pdf")
+```
+
+JG bias plot
+
+```{r}
+fres <- filter(res,method!="UCLR",ConCaseRatio==1,exptype!="binary0.1",beta==0.5|beta==1.5,nmatch==10|nmatch==50)
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=bias,color=beta,linetype=nmatch,shape=nmatch)) + geom_point() + geom_line() +
+   #geom_linerange(aes(ymin=bias-2*bias.SE,ymax=bias+2*bias.SE)) +
+  facet_grid(nmatch~exptype) +
+   geom_hline(yintercept=0, color = "grey",linewidth=2,alpha=.5) +
+  #scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL),n.breaks=4) +
+  scale_y_continuous(n.breaks=4) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(exptype~method) + 
+  xlab("number of nuisance covariates")+ ylab("estimated bias") +
+  labs(color="exposure effect") + labs(shape="number of matched sets") +
+  labs(linetype="number of matched sets") +
+   #ggtitle("method") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="bias.eps",device="eps")
+ggsave(file="bias.pdf",device="pdf")
+```
+
+## MSE
+
+Do a plot of all MSEs, but then jump to the same subset of simulations as
+in the bias plots.
+
+```{r}
+fres <-  res
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=MSE,color=beta,linetype=ConCaseRatio,shape=method)) + geom_point() + geom_line() +
+  facet_grid(nmatch~exptype) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL),n.breaks=3) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(nmatch~exptype,scale="free") + 
+  #scale_y_continuous(n.breaks = 4) +
+  xlab("number of nuisance covariates")+ ylab("estimated mean squared error") +
+  labs(color="exposure effect") +
+  labs(linetype="num. controls") +
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+```
+
+
+
+```{r}
+fres <- filter(res,method!="UCLR",ConCaseRatio==1,nmatch!=10,beta==0|beta==1.5)
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=MSE,color=beta,shape=method)) + geom_point() + geom_line() +
+  facet_grid(nmatch~exptype) +
+  scale_y_continuous(sec.axis = sec_axis(~ . , name = "number of matched sets",breaks = NULL,labels = NULL),n.breaks=3) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(nmatch~exptype,scale="free") + 
+  #scale_y_continuous(n.breaks = 4) +
+  xlab("number of nuisance covariates")+ ylab("estimated mean squared error") +
+  labs(color="exposure effect") +
+  labs(linetype="num. controls") +
+   ggtitle("exposure type") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+   ggsave(file="MSE.eps",device="eps")
+ggsave(file="MSE.pdf",device="pdf")
+```
+
+JG MSE plot
+
+```{r}
+fres <- filter(res,method!="UCLR",ConCaseRatio==1,exptype!="binary0.1",beta==0.5|beta==1.5,nmatch==10|nmatch==50)
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=MSE,color=beta,linetype=nmatch,shape=nmatch)) + geom_point() + geom_line() +
+  geom_linerange(aes(ymin=MSE-2*MSE.se,ymax=MSE+2*MSE.se)) +
+  facet_grid(nmatch~exptype) +
+   geom_hline(yintercept=0, color = "grey",linewidth=2,alpha=.5) +
+  #scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL),n.breaks=4) +
+  scale_y_continuous(n.breaks=4) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(exptype~method) + 
+  xlab("number of nuisance covariates")+ ylab("estimated MSE") +
+  labs(color="exposure effect") + labs(shape="number of matched sets") +
+  labs(linetype="number of matched sets") +
+   #ggtitle("method") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="MSE.eps",device="eps")
+ggsave(file="MSE.pdf",device="pdf")
+```
+
+
+Solve for estimator variance as MSE minus bias squared.
+
+```{r}
+res$var <- res$MSE - (res$bias)^2
+fres <- filter(res,method!="UCLR",ConCaseRatio==1,exptype!="binary0.1",beta==0.5|beta==1.5,nmatch==10|nmatch==50)
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=var,color=beta,linetype=nmatch,shape=nmatch)) + geom_point() + geom_line() +
+  facet_grid(nmatch~exptype) +
+   geom_hline(yintercept=0, color = "grey",linewidth=2,alpha=.5) +
+  #scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL),n.breaks=4) +
+  scale_y_continuous(n.breaks=4) +
+  geom_point(position=position_jitter(.1),size=.3) +
+  facet_grid(exptype~method) + 
+  xlab("number of nuisance covariates")+ ylab("estimated variance") +
+  labs(color="exposure effect") + labs(shape="number of matched sets") +
+  labs(linetype="number of matched sets") +
+   #ggtitle("method") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="var.eps",device="eps")
+ggsave(file="var.pdf",device="pdf")
+```
+
+
+Coverage: now include it in estimation.
+
+```{r}
+fres <- filter(res,method!="UCLR",ConCaseRatio==1,exptype!="binary0.1",beta==0.5|beta==1.5,nmatch==10|nmatch==50)
+fres$ncov <- as.numeric(as.character(fres$ncov))
+ggplot(fres,aes(x=ncov,y=cover,color=beta,linetype=nmatch,shape=nmatch)) + 
+  geom_point(position=position_dodge(width=.2)) + geom_line() +
+   geom_linerange(aes(ymin=cover-2*cover.se,ymax=cover+2*cover.se),position=position_dodge(width=.2)) +
+  facet_grid(nmatch~exptype) +
+  geom_hline(yintercept=0.95, color = "grey",linewidth=2,alpha=.5) +
+  #scale_y_continuous(sec.axis = sec_axis(~ . , name = "exposure type",breaks = NULL,labels = NULL),n.breaks=4) +
+  scale_y_continuous(n.breaks=4) +
+  facet_grid(exptype~method) + 
+  xlab("number of nuisance covariates")+ ylab("estimated coverage of 95% CIs") +
+  labs(color="exposure effect") + labs(shape="number of matched sets") +
+  labs(linetype="number of matched sets") +
+   #ggtitle("method") +
+theme(plot.title = element_text(hjust = 0.5, size = 11))
+ggsave(file="cover.eps",device="eps")
+ggsave(file="cover.pdf",device="pdf")
+```
