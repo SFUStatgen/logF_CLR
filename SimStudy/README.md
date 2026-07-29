@@ -1,7 +1,6 @@
 ---
 title: "Simulation code for: Log-F-penalized Conditional Logistic Regression for Sparse Data"
 author: Ying Yu, Jiying Wen, Jinko Graham, Brad McNeney
-output: pdf_document
 ---
 
 This directory contains the R code for the simulation study from to the
